@@ -1,0 +1,12 @@
+mtp_registry_version: '0.6'
+registry:
+  id: e8dcc759-6183-43b7-b34e-210bfba42dad
+  name: MTP Example Registry
+  created_at: '2026-03-09T21:21:11Z'
+  layout_version: '0.6'
+  default_channel: draft
+  supported_channels:
+  - draft
+  - review
+  - approved
+  - deprecated

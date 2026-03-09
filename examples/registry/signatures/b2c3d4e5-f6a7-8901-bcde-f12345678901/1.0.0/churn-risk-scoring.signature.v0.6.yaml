@@ -1,0 +1,21 @@
+mtp_registry_version: '0.6'
+signature_envelope:
+  envelope_id: b2976c1b-3354-4908-951f-21df7c318e93
+  artifact_type: package
+  artifact_identity:
+    id: b2c3d4e5-f6a7-8901-bcde-f12345678901
+    version: 1.0.0
+    name: Customer Churn Risk Scoring
+  artifact_ref: artifacts/packages/b2c3d4e5-f6a7-8901-bcde-f12345678901/1.0.0/package.yaml
+  artifact_hash:
+    algorithm: sha256
+    value: sha256:8c09446a5eecf5afaf2a5eccf31648078eb8168b6b1e4fa6f631cea0e8951480
+  canonicalization: json-sorted-v1
+  signature_profile:
+    profile: hmac-sha256
+    key_id: example-key
+    key_source: env:MTP_REGISTRY_SIGNING_KEY
+  signer:
+    id: release-bot
+  signed_at: '2026-03-09T21:21:11Z'
+  signature: 68edeb55b74d2f1189a0b5c154449febc86a7e6ca82f3bb4af4062a1e05e1f22

@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lubor-fedak/mtp-spec/schema/mtp-signature-envelope-v0.6.json",
+  "title": "MTP Signature Envelope v0.6",
+  "type": "object",
+  "required": ["mtp_registry_version", "signature_envelope"],
+  "properties": {
+    "mtp_registry_version": {
+      "type": "string",
+      "const": "0.6"
+    },
+    "signature_envelope": {
+      "type": "object",
+      "required": [
+        "envelope_id",
+        "artifact_type",
+        "artifact_identity",
+        "artifact_ref",
+        "artifact_hash",
+        "canonicalization",
+        "signature_profile",
+        "signer",
+        "signed_at",
+        "signature"
+      ],
+      "properties": {
+        "envelope_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "artifact_type": {
+          "type": "string",
+          "enum": ["package", "execution_report"]
+        },
+        "artifact_identity": {
+          "$ref": "#/$defs/artifactIdentity"
+        },
+        "artifact_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact_hash": {
+          "$ref": "#/$defs/hashRef"
+        },
+        "canonicalization": {
+          "type": "string",
+          "const": "json-sorted-v1"
+        },
+        "signature_profile": {
+          "type": "object",
+          "required": ["profile", "key_id", "key_source"],
+          "properties": {
+            "profile": {
+              "type": "string",
+              "const": "hmac-sha256"
+            },
+            "key_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "key_source": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "signer": {
+          "type": "object",
+          "required": ["id"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "signed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "signature": {
+          "type": "string",
+          "pattern": "^[A-Fa-f0-9]{64}$"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "artifactIdentity": {
+      "type": "object",
+      "required": ["id", "version", "name"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "hashRef": {
+      "type": "object",
+      "required": ["algorithm", "value"],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "const": "sha256"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^sha256:[A-Fa-f0-9]{64}$"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

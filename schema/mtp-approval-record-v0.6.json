@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lubor-fedak/mtp-spec/schema/mtp-approval-record-v0.6.json",
+  "title": "MTP Approval Record v0.6",
+  "type": "object",
+  "required": ["mtp_registry_version", "approval_record"],
+  "properties": {
+    "mtp_registry_version": {
+      "type": "string",
+      "const": "0.6"
+    },
+    "approval_record": {
+      "type": "object",
+      "required": [
+        "approval_id",
+        "artifact_type",
+        "artifact_identity",
+        "artifact_ref",
+        "artifact_hash",
+        "workflow",
+        "approver",
+        "decided_at",
+        "rationale"
+      ],
+      "properties": {
+        "approval_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "artifact_type": {
+          "type": "string",
+          "enum": ["package", "execution_report"]
+        },
+        "artifact_identity": {
+          "$ref": "#/$defs/artifactIdentity"
+        },
+        "artifact_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact_hash": {
+          "$ref": "#/$defs/hashRef"
+        },
+        "workflow": {
+          "type": "object",
+          "required": ["policy", "decision"],
+          "properties": {
+            "policy": {
+              "type": "string",
+              "minLength": 1
+            },
+            "decision": {
+              "type": "string",
+              "enum": ["approved", "rejected"]
+            }
+          },
+          "additionalProperties": false
+        },
+        "approver": {
+          "type": "object",
+          "required": ["id", "name", "role"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "role": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "decided_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence": {
+          "type": "object",
+          "properties": {
+            "signature_ref": {
+              "type": "string"
+            },
+            "conformance_ref": {
+              "type": "string"
+            },
+            "ticket_ref": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "artifactIdentity": {
+      "type": "object",
+      "required": ["id", "version", "name"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "hashRef": {
+      "type": "object",
+      "required": ["algorithm", "value"],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "const": "sha256"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^sha256:[A-Fa-f0-9]{64}$"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

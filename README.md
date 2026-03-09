@@ -94,9 +94,21 @@ mtp-conformance run --level l3
 
 This runs the fixture-driven L1/L2/L3 conformance corpus across schema validation, execution semantics, redaction detection, provenance presence, and drift reference cases.
 
+### 6. Publish into a registry
+
+```bash
+cd tools/mtp-registry && pip install -e .
+mtp-registry init registry/ --name "Internal MTP Registry"
+mtp-registry sign your-package.yaml --key-env MTP_REGISTRY_SIGNING_KEY --key-id dev-key --signer release-bot
+```
+
+This adds detached trust artifacts on top of validated MTP packages and reports: signatures, approvals, and publishable registry entries.
+
 ## Specification
 
 📄 **[MTP Specification v0.2](spec/MTP-SPEC-v0.2.md)** — Full specification: lifecycle, package format, provenance, execution semantics, redaction discipline, drift measurement, conformance levels, and benchmark framework. Current patch: **0.2.1**.
+
+📄 **[MTP Registry Extension v0.6](spec/MTP-REGISTRY-v0.6.md)** — Registry layout, detached signature envelopes, approval records, registry entries, and local trust workflow.
 
 📄 **[MTP Specification v0.1](spec/MTP-SPEC-v0.1.md)** — Original draft (superseded by v0.2).
 
@@ -108,6 +120,10 @@ MTP provides JSON Schemas (Draft 2020-12) for machine validation of all artifact
 |--------|-----------|------------|
 | [mtp-package-v0.2.json](schema/mtp-package-v0.2.json) | MTP Packages | Strict: `mtp_version` must be `"0.2"`, `policy` required, `provenance` and `execution_semantics` required on steps |
 | [mtp-execution-report-v0.2.json](schema/mtp-execution-report-v0.2.json) | Execution Reports | Includes conditional validation for `overall_status` derivation, state-dependent required fields |
+| [mtp-registry-manifest-v0.6.json](schema/mtp-registry-manifest-v0.6.json) | Registry manifests | Local registry identity and channel layout |
+| [mtp-signature-envelope-v0.6.json](schema/mtp-signature-envelope-v0.6.json) | Signature envelopes | Detached trust metadata for packages and execution reports |
+| [mtp-approval-record-v0.6.json](schema/mtp-approval-record-v0.6.json) | Approval records | Governance decisions tied to artifact hashes |
+| [mtp-registry-entry-v0.6.json](schema/mtp-registry-entry-v0.6.json) | Registry entries | Published registry assets with trust refs and lifecycle state |
 | [mtp-package-v0.1.json](schema/mtp-package-v0.1.json) | Legacy v0.1 packages | Permissive: backward compatibility |
 
 v0.1 packages are correctly rejected by the v0.2 schema. Use the v0.1 schema for legacy packages.
@@ -167,6 +183,23 @@ cd tools/mtp-conformance && pip install -e .
 
 Fixture corpus lives in [conformance/fixtures/README.md](conformance/fixtures/README.md). CI runs the conformance suite automatically as a release gate.
 
+### mtp-registry (v0.6)
+
+Registry, signing, and approval workflow tooling. See [tools/mtp-registry/README.md](tools/mtp-registry/README.md) for full usage.
+
+```bash
+cd tools/mtp-registry && pip install -e .
+```
+
+| Command | What it does |
+|---------|-------------|
+| `mtp-registry init <dir>` | Initialize a local MTP registry layout |
+| `mtp-registry sign <artifact>` | Generate a detached signature envelope using the reference `hmac-sha256` profile |
+| `mtp-registry verify <artifact>` | Verify artifact hash, identity, and signature envelope |
+| `mtp-registry approve <artifact>` | Create a detached approval record tied to the artifact hash |
+| `mtp-registry publish <artifact>` | Copy artifact and trust sidecars into a registry and generate a registry entry |
+| `mtp-registry check-entry <entry>` | Verify a published registry entry plus all referenced trust artifacts |
+
 ## Examples
 
 | File | Type | Description |
@@ -174,6 +207,8 @@ Fixture corpus lives in [conformance/fixtures/README.md](conformance/fixtures/RE
 | [churn-risk-scoring-v0.2.yaml](examples/churn-risk-scoring-v0.2.yaml) | Package (v0.2) | Golden v0.2 package — customer churn scoring with full provenance, execution semantics, and policy envelope |
 | [churn-risk-scoring-mock-execution-report-v0.2.yaml](examples/churn-risk-scoring-mock-execution-report-v0.2.yaml) | Exec Report (v0.2) | Deterministic mock runtime report from `mtp-run exec` — 5 steps success, drift 1.0 |
 | [churn-risk-scoring-execution-report-v0.2.yaml](examples/churn-risk-scoring-execution-report-v0.2.yaml) | Exec Report (v0.2) | Example real-platform-style execution report with deviation handling and corrected weighted drift score |
+| [registry.yaml](examples/registry/registry.yaml) | Registry Manifest (v0.6) | Reference local registry initialized by `mtp-registry` |
+| [customer-churn-risk-scoring-1.0.0.registry-entry.yaml](examples/registry/entries/customer-churn-risk-scoring-1.0.0.registry-entry.yaml) | Registry Entry (v0.6) | Published registry entry for the churn scoring package with signature and approval refs |
 | [test-data-churn.csv](examples/test-data-churn.csv) | Test Data | Sample data for running the churn scoring package |
 | [valuation-report-extraction.yaml](examples/valuation-report-extraction.yaml) | Package (v0.1) | Document processing methodology (v0.1 format) |
 
@@ -181,6 +216,7 @@ Try it yourself:
 ```bash
 mtp-lint check examples/churn-risk-scoring-v0.2.yaml
 mtp-run exec examples/churn-risk-scoring-v0.2.yaml --data examples/test-data-churn.csv --adapter mock
+MTP_REGISTRY_SIGNING_KEY=mtp-example-registry-key-v0.6 mtp-registry check-entry examples/registry/entries/customer-churn-risk-scoring-1.0.0.registry-entry.yaml --registry-dir examples/registry --key-env MTP_REGISTRY_SIGNING_KEY
 ```
 
 ## Roadmap
@@ -191,8 +227,8 @@ mtp-run exec examples/churn-risk-scoring-v0.2.yaml --data examples/test-data-chu
 | v0.2.x | ✅ Released | Lifecycle, provenance, execution semantics, redaction, drift, conformance. Patch: 0.2.1 |
 | v0.3.x | ✅ Released | `mtp-lint` CLI: schema validator, redaction scanner (6 categories), completeness scorer, policy gate. Patch: 0.3.2 |
 | v0.4 | ✅ Released | `mtp-run` reference runtime CLI: execution engine, adapters (mock, Anthropic, OpenAI, Azure), drift comparison |
-| v0.5 | ✅ Current | `mtp-conformance` fixture runner, L1/L2/L3 fixture packs, release-gate summaries, CI conformance reporting |
-| v0.6 | Planned | Registry specification, signatures, approval workflows |
+| v0.5 | ✅ Released | `mtp-conformance` fixture runner, L1/L2/L3 fixture packs, release-gate summaries, CI conformance reporting |
+| v0.6 | ✅ Current | `mtp-registry` CLI, registry schemas, detached signature envelopes, approval records, local registry publication workflow |
 | v1.0 | Target | Production adapters, community benchmarks, enterprise reference architecture |
 
 ## Contributing

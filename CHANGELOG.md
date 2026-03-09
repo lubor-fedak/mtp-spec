@@ -2,6 +2,32 @@
 
 All notable changes to the MTP specification are documented in this file.
 
+## [0.6.0] — 2026-03-09
+
+### Registry extension
+- Added new registry extension spec at `spec/MTP-REGISTRY-v0.6.md`
+- Added detached trust artifacts instead of mutating the stable `v0.2` package format
+- Defined local registry manifest, signature envelope, approval record, and registry entry models
+
+### New tooling: mtp-registry
+- Added `tools/mtp-registry/` Python CLI
+- Commands: `init`, `sign`, `verify`, `approve`, `publish`, `check-entry`
+- Reference signature profile: `hmac-sha256` over canonical `json-sorted-v1` artifact content
+
+### Schemas
+- Added `mtp-registry-manifest-v0.6.json`
+- Added `mtp-signature-envelope-v0.6.json`
+- Added `mtp-approval-record-v0.6.json`
+- Added `mtp-registry-entry-v0.6.json`
+
+### Examples and workflow
+- Added reference registry example under `examples/registry/`
+- Local publication flow now supports: validate → sign → approve → publish → verify
+
+### Tests and CI
+- Added `mtp-registry` CLI tests
+- CI now runs `mtp-registry` tests and example verification
+
 ## [0.5.0] — 2026-03-09
 
 ### Formal conformance suite

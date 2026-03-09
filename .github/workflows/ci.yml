@@ -65,6 +65,33 @@ jobs:
       - name: Run tests
         run: pytest tools/mtp-conformance/tests/ -v --tb=short
 
+  mtp-registry:
+    name: mtp-registry tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install mtp-registry
+        run: pip install -e "tools/mtp-registry[dev]"
+      - name: Run tests
+        run: pytest tools/mtp-registry/tests/ -v --tb=short
+      - name: Verify example registry artifacts
+        env:
+          MTP_REGISTRY_SIGNING_KEY: mtp-example-registry-key-v0.6
+        run: |
+          mtp-registry verify examples/churn-risk-scoring-v0.2.yaml \
+            --signature examples/registry/signatures/b2c3d4e5-f6a7-8901-bcde-f12345678901/1.0.0/churn-risk-scoring.signature.v0.6.yaml \
+            --key-env MTP_REGISTRY_SIGNING_KEY
+          mtp-registry check-entry \
+            examples/registry/entries/customer-churn-risk-scoring-1.0.0.registry-entry.yaml \
+            --registry-dir examples/registry \
+            --key-env MTP_REGISTRY_SIGNING_KEY
+
   conformance-levels:
     name: conformance-${{ matrix.level }}
     runs-on: ubuntu-latest

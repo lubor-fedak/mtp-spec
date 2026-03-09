@@ -1,0 +1,23 @@
+mtp_registry_version: '0.6'
+approval_record:
+  approval_id: 67602182-f24a-4270-90e6-3433b3c9bfa4
+  artifact_type: package
+  artifact_identity:
+    id: b2c3d4e5-f6a7-8901-bcde-f12345678901
+    version: 1.0.0
+    name: Customer Churn Risk Scoring
+  artifact_ref: artifacts/packages/b2c3d4e5-f6a7-8901-bcde-f12345678901/1.0.0/package.yaml
+  artifact_hash:
+    algorithm: sha256
+    value: sha256:8c09446a5eecf5afaf2a5eccf31648078eb8168b6b1e4fa6f631cea0e8951480
+  workflow:
+    policy: enterprise-release-v1
+    decision: approved
+  approver:
+    id: risk-committee
+    name: Risk Committee
+    role: governance
+  decided_at: '2026-03-09T21:21:11Z'
+  rationale: Approved for internal registry publication.
+  evidence:
+    signature_ref: signatures/b2c3d4e5-f6a7-8901-bcde-f12345678901/1.0.0/churn-risk-scoring.signature.v0.6.yaml

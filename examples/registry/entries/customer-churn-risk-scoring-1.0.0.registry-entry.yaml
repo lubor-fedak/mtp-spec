@@ -1,0 +1,25 @@
+mtp_registry_version: '0.6'
+registry_entry:
+  entry_id: 6c3113f3-875f-419a-a878-71e50e40f9ba
+  artifact_type: package
+  artifact_identity:
+    id: b2c3d4e5-f6a7-8901-bcde-f12345678901
+    version: 1.0.0
+    name: Customer Churn Risk Scoring
+  artifact_ref: artifacts/packages/b2c3d4e5-f6a7-8901-bcde-f12345678901/1.0.0/package.yaml
+  artifact_hash:
+    algorithm: sha256
+    value: sha256:8c09446a5eecf5afaf2a5eccf31648078eb8168b6b1e4fa6f631cea0e8951480
+  registry_status: approved
+  channel: internal
+  published_at: '2026-03-09T21:21:23Z'
+  signature_refs:
+  - signatures/b2c3d4e5-f6a7-8901-bcde-f12345678901/1.0.0/churn-risk-scoring.signature.v0.6.yaml
+  approval_refs:
+  - approvals/b2c3d4e5-f6a7-8901-bcde-f12345678901/1.0.0/churn-risk-scoring.approval.v0.6.yaml
+  trust:
+    signature_verified: true
+    approval_required: true
+    approved: true
+  provenance:
+    source_repo: https://github.com/lubor-fedak/mtp-spec
