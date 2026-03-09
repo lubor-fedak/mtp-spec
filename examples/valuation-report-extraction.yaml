@@ -1,0 +1,357 @@
+mtp_version: "0.1"
+package:
+  id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  name: "Structured Data Extraction from Scanned Valuation Reports"
+  version: "1.0.0"
+  created: "2026-03-09T10:00:00Z"
+  updated: "2026-03-09T10:00:00Z"
+  author: "anonymous@company.com"
+  source_platform: "claude-4.6"
+  tags: ["document-processing", "ocr", "data-extraction", "real-estate", "valuation"]
+
+# --- SECTION 1: INTENT ---
+intent:
+  goal: |
+    Extract structured data fields from scanned PDF valuation reports
+    (property appraisals) produced by different valuation companies,
+    each using their own document layout and formatting conventions.
+    Produce a normalized JSON output with consistent field names
+    and validated values regardless of source document format.
+  context: |
+    Valuation companies in the Czech and Slovak markets produce
+    property appraisal reports as scanned PDFs (not born-digital).
+    These reports follow a general regulatory structure but each
+    company uses its own templates, headers, table layouts, and
+    terminology variations. The extracted data feeds into a
+    downstream system for portfolio analysis and regulatory reporting.
+    
+    Key domain knowledge:
+    - Reports contain both tabular data and narrative sections
+    - Property values appear in multiple places (summary, detailed
+      breakdown, comparative analysis) and may differ due to
+      rounding or methodology
+    - Czech/Slovak terminology must be normalized to English field names
+    - Some fields are mandatory for regulatory compliance, others optional
+  success_criteria:
+    - "95%+ extraction accuracy on mandatory fields"
+    - "Zero silent failures — every unextractable field must be flagged"
+    - "Consistent JSON output regardless of source document layout"
+  non_goals:
+    - "This methodology does not validate the correctness of valuations"
+    - "This methodology does not handle born-digital (text-based) PDFs — those use a simpler pipeline"
+    - "This methodology does not translate narrative sections, only structured fields"
+
+# --- SECTION 2: INPUT SPECIFICATION ---
+input:
+  description: |
+    Scanned PDF documents, typically 15-80 pages, containing
+    property valuation reports. Quality varies from clean scans
+    to slightly skewed or low-resolution documents.
+  schema:
+    - field: "pdf_file"
+      type: "binary"
+      description: "Scanned PDF document"
+      required: true
+      constraints: "Must be a valid PDF. Page count between 1-200."
+    - field: "expected_language"
+      type: "string"
+      description: "Primary language of the document (cs/sk)"
+      required: true
+      constraints: "ISO 639-1 code"
+    - field: "company_id"
+      type: "string"
+      description: "Identifier of the valuation company (for layout hints)"
+      required: false
+      constraints: "If provided, enables layout-specific extraction rules"
+  assumptions:
+    - "PDF contains embedded images of scanned pages (not text layer)"
+    - "Document is in Czech or Slovak language"
+    - "Scan quality is sufficient for OCR (DPI >= 200)"
+    - "Pages are in correct order (not shuffled)"
+  preprocessing:
+    - step: 1
+      action: "Convert PDF pages to individual images (PNG, 300 DPI)"
+      rationale: "OCR engines perform better on individual page images than on multi-page PDFs. 300 DPI provides good balance between quality and processing time."
+    - step: 2
+      action: "Detect and correct page skew (deskew if angle > 0.5 degrees)"
+      rationale: "Skewed pages significantly degrade OCR accuracy, especially for table recognition. Threshold of 0.5 degrees was determined empirically."
+    - step: 3
+      action: "Classify each page into categories: cover, summary, property_description, valuation_detail, comparative_analysis, appendix, other"
+      rationale: "Different extraction strategies apply to different page types. Processing all pages with the same strategy produces poor results on non-tabular pages."
+
+# --- SECTION 3: METHODOLOGY ---
+methodology:
+  approach: |
+    Three-stage pipeline: (1) OCR with layout preservation,
+    (2) section-aware field extraction using page classification,
+    (3) cross-validation of extracted values across document sections.
+    
+    This approach was chosen over end-to-end multimodal extraction
+    because: (a) valuation reports are long documents that exceed
+    context windows of most multimodal models, (b) section-specific
+    extraction produces more reliable results than whole-document
+    extraction, (c) cross-validation catches OCR errors that
+    single-pass extraction misses.
+
+  steps:
+    - step: 1
+      name: "OCR with Layout Preservation"
+      action: |
+        Run OCR on each page image preserving spatial layout information.
+        Output must include bounding boxes for each text block, not just
+        plain text. Use a layout-aware OCR engine (e.g., Tesseract with
+        LSTM model for Czech/Slovak, or cloud OCR API with layout analysis).
+        
+        For each page, produce:
+        - Full text with reading order preserved
+        - Table structures with row/column boundaries
+        - Header/footer detection and separation
+      rationale: |
+        Plain text OCR loses table structure, which is critical for
+        valuation reports where the same label appears in multiple
+        tables with different values. Spatial layout preserves the
+        relationship between labels and values.
+      validation: |
+        Verify OCR confidence score is above 80% for each page.
+        Flag pages with confidence below 80% for manual review.
+        Verify at least one table structure detected in pages
+        classified as valuation_detail.
+
+    - step: 2
+      name: "Mandatory Field Extraction — Summary Page"
+      action: |
+        From pages classified as 'summary', extract:
+        - property_address (string)
+        - property_type (enum: residential, commercial, land, industrial, other)
+        - valuation_date (date, format: YYYY-MM-DD)
+        - market_value (number, in CZK or EUR)
+        - currency (enum: CZK, EUR)
+        - valuation_method (enum: comparative, income, cost, combined)
+        - valuer_name (string)
+        - valuer_license_number (string)
+        
+        Use the following Czech/Slovak label mappings:
+        - "Tržní hodnota" / "Trhová hodnota" → market_value
+        - "Datum ocenění" / "Dátum ocenenia" → valuation_date
+        - "Adresa nemovitosti" / "Adresa nehnuteľnosti" → property_address
+        - "Způsob ocenění" / "Spôsob ocenenia" → valuation_method
+        
+        If a field is not found on summary pages, DO NOT skip it.
+        Instead, flag it as missing and attempt extraction from
+        valuation_detail pages in Step 3.
+      depends_on: [1]
+      decision_points:
+        - condition: "market_value found in multiple locations on summary with different values"
+          then: "Extract all values, flag as 'conflicting_values', proceed to cross-validation"
+          rationale: "Summary pages sometimes contain both rounded and precise values. Cross-validation in Step 5 resolves this."
+        - condition: "property_type cannot be determined from summary"
+          then: "Attempt inference from property_description pages, flag as 'inferred'"
+          rationale: "Some older report templates don't include explicit property type on summary"
+      validation: |
+        All 8 mandatory fields must be either extracted or flagged.
+        Zero fields may be silently empty.
+        market_value must be a positive number.
+        valuation_date must be a valid date not in the future.
+
+    - step: 3
+      name: "Mandatory Field Extraction — Detail Pages"
+      action: |
+        From pages classified as 'valuation_detail', extract:
+        - land_area_sqm (number)
+        - building_area_sqm (number, if applicable)
+        - construction_year (integer, if applicable)
+        - number_of_units (integer, if applicable)
+        - detailed_value_breakdown (array of {component, value} pairs)
+        
+        For any mandatory fields flagged as missing in Step 2,
+        attempt extraction from detail pages and update the
+        field status from 'missing' to 'extracted_from_detail'.
+      depends_on: [1, 2]
+      validation: |
+        land_area_sqm must be positive if property is not apartment.
+        construction_year must be between 1400 and current year.
+        Sum of detailed_value_breakdown components should approximate
+        market_value within 5% tolerance.
+
+    - step: 4
+      name: "Optional Field Extraction"
+      action: |
+        From all classified pages, extract if present:
+        - cadastral_number (string)
+        - plot_number (string)
+        - encumbrances (array of strings)
+        - comparative_properties (array of {address, value, sqm_price})
+        - photographs_count (integer — count of embedded property photos)
+        
+        These fields enhance the output but are not required.
+        If not found, set to null without flagging.
+      depends_on: [1, 2, 3]
+
+    - step: 5
+      name: "Cross-Validation"
+      action: |
+        Compare values extracted from different document sections:
+        
+        1. market_value from summary vs sum of detailed_value_breakdown
+           Tolerance: 5%. If exceeds, flag as 'value_discrepancy'.
+        
+        2. property_address from summary vs address mentions in
+           property_description pages. If significantly different,
+           flag as 'address_discrepancy'.
+        
+        3. land_area from detail pages vs area mentioned in
+           comparative_analysis (if available). Tolerance: 2%.
+        
+        4. valuation_date from summary vs dates mentioned in
+           report body. Flag if report contains dates more than
+           30 days after stated valuation_date (may indicate
+           report was written much later than valuation).
+      depends_on: [2, 3, 4]
+      rationale: |
+        Cross-validation is the most critical quality step. OCR errors
+        on numbers are common (e.g., "1" read as "l", "0" as "O").
+        By comparing the same value from multiple document locations,
+        we catch errors that single-pass extraction misses.
+        
+        The 5% tolerance on value comparison accounts for legitimate
+        rounding differences between summary and detail sections.
+      validation: |
+        All cross-validation checks must produce a result (pass/flag).
+        No check may be skipped.
+
+    - step: 6
+      name: "Output Assembly"
+      action: |
+        Assemble all extracted fields into the output JSON structure.
+        Include metadata: extraction confidence scores, flags,
+        cross-validation results, and list of pages that could not
+        be processed.
+        
+        Set overall_confidence:
+        - "high" if all mandatory fields extracted, no flags
+        - "medium" if all mandatory fields extracted, some flags
+        - "low" if any mandatory field missing or critical flags
+        - "manual_review" if confidence below threshold on >20% of pages
+      depends_on: [5]
+
+# --- SECTION 4: EDGE CASES AND CONSTRAINTS ---
+edge_cases:
+  - scenario: "Document contains pages in mixed orientation (portrait and landscape)"
+    handling: "Detect orientation per page and rotate landscape pages before OCR"
+    rationale: "Table pages are sometimes rotated to landscape for wider tables"
+    severity: "warning"
+
+  - scenario: "Property value is stated in thousands (e.g., '1.250 tis. Kč' meaning 1,250,000 CZK)"
+    handling: "Detect 'tis.' or 'tys.' suffix and multiply by 1000. Detect 'mil.' and multiply by 1,000,000"
+    rationale: "This is a common Czech/Slovak convention that causes extraction errors if not handled"
+    severity: "critical"
+
+  - scenario: "Document is bilingual (Czech/Slovak body with German or English summary)"
+    handling: "Apply language detection per page and use appropriate label mappings"
+    rationale: "Cross-border valuations sometimes include translated summaries"
+    severity: "info"
+
+  - scenario: "Scanned document contains handwritten annotations"
+    handling: "Ignore handwritten text — do not attempt extraction. Flag page as containing annotations"
+    rationale: "Handwritten text OCR is unreliable and annotations may contradict typed values"
+    severity: "warning"
+
+  - scenario: "Multiple properties valued in a single report"
+    handling: "Detect section boundaries per property and produce separate output JSONs for each. Link them with a shared report_id"
+    rationale: "Portfolio valuations bundle multiple properties. Treating them as one property produces invalid output"
+    severity: "critical"
+
+  - scenario: "Czech decimal separator is comma (1.250,50 = 1250.50)"
+    handling: "Detect locale from document language. Czech/Slovak: comma = decimal, period = thousands separator. Always output with period as decimal separator"
+    rationale: "Misinterpreting decimal separators causes 1000x errors in property values"
+    severity: "critical"
+
+constraints:
+  - type: "compliance"
+    description: "All mandatory fields must be present or explicitly flagged. Silent omission violates downstream regulatory reporting requirements."
+    enforcement: "Output validation must verify all mandatory fields before returning results"
+  - type: "accuracy"
+    description: "Numeric values (especially market_value) must be verified via cross-validation. A single-source extraction of financial values is not acceptable."
+    enforcement: "Step 5 cross-validation is non-optional"
+  - type: "security"
+    description: "This MTP Package contains no actual property data, addresses, or personal information. It must remain data-free."
+    enforcement: "Review package contents before sharing or publishing"
+
+# --- SECTION 5: OUTPUT SPECIFICATION ---
+output:
+  description: |
+    Normalized JSON object containing all extracted fields,
+    metadata, validation results, and confidence scores.
+  schema:
+    - field: "report_id"
+      type: "string"
+      description: "Unique identifier for this extraction"
+    - field: "extraction_timestamp"
+      type: "datetime"
+      description: "When extraction was performed"
+    - field: "overall_confidence"
+      type: "enum: high | medium | low | manual_review"
+      description: "Overall extraction quality assessment"
+    - field: "mandatory_fields"
+      type: "object"
+      description: "All mandatory extracted fields with values and status"
+    - field: "optional_fields"
+      type: "object"
+      description: "Optional fields (null if not found)"
+    - field: "cross_validation"
+      type: "object"
+      description: "Results of all cross-validation checks"
+    - field: "flags"
+      type: "array"
+      description: "All flags raised during extraction"
+    - field: "unprocessed_pages"
+      type: "array"
+      description: "Page numbers that could not be processed and reason"
+  quality_checks:
+    - check: "All mandatory fields present or flagged"
+      failure_action: "Set overall_confidence to 'low' and add to flags"
+    - check: "market_value is positive number"
+      failure_action: "Set overall_confidence to 'manual_review'"
+    - check: "No cross-validation check returned 'critical_discrepancy'"
+      failure_action: "Set overall_confidence to 'manual_review'"
+
+# --- SECTION 6: DEAD ENDS ---
+dead_ends:
+  - approach: "End-to-end multimodal extraction (send full PDF to vision model)"
+    reason: "Valuation reports are 15-80 pages. Even with large context windows, the model loses accuracy on later pages and frequently hallucinates values from earlier pages into later sections."
+    lesson: "Always use page-level extraction with section classification. Do not attempt whole-document extraction."
+
+  - approach: "Template matching using fixed coordinate regions per valuation company"
+    reason: "Even within the same company, template versions change frequently. Coordinate-based extraction broke within 2-3 months of deployment as companies updated their report templates."
+    lesson: "Use semantic label matching, not positional extraction. The label 'Tržní hodnota' is stable even when its position on the page changes."
+
+  - approach: "Regex-based number extraction without locale awareness"
+    reason: "Czech number formatting (1.250,50) caused systematic 1000x errors when parsed with English locale regex. Discovered after producing incorrect portfolio valuations for 3 weeks."
+    lesson: "Always detect document locale BEFORE extracting numeric values. Never assume decimal separator."
+
+  - approach: "Extracting valuer credentials from document metadata (PDF properties)"
+    reason: "Scanned PDFs have no meaningful metadata — scanner software populates generic values. PDF properties contain scanner model name, not valuer information."
+    lesson: "For scanned documents, all information must come from OCR, never from PDF metadata."
+
+# --- SECTION 7: ADAPTATION NOTES ---
+adaptation:
+  flexibility: |
+    - OCR engine choice is flexible (Tesseract, Google Cloud Vision,
+      Azure Document Intelligence, or any engine with layout analysis)
+    - Page classification categories can be extended for company-specific
+      section types
+    - Optional fields list can be extended without affecting core methodology
+    - Confidence thresholds can be adjusted based on downstream requirements
+  fixed_elements: |
+    - Three-stage pipeline order (OCR → Section Extraction → Cross-Validation)
+      must not be changed
+    - Cross-validation step (Step 5) is mandatory and must not be skipped
+    - Czech/Slovak decimal separator handling is critical and must be
+      implemented exactly as specified
+    - "Flag, don't skip" principle for missing mandatory fields must be
+      maintained — silent omission is never acceptable
+  target_requirements: |
+    - Must support structured output (JSON)
+    - Must have access to OCR engine with layout analysis capability
+    - Must support Czech and Slovak language processing
+    - Must handle numeric locale conversion (comma vs period decimal)

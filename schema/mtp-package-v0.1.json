@@ -1,0 +1,382 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lubor-fedak/mtp-spec/schema/mtp-package-v0.1.json",
+  "title": "MTP Package",
+  "description": "Methodology Transfer Protocol — a structured, portable format for AI-developed methodologies. Version 0.1.",
+  "type": "object",
+  "required": ["mtp_version", "package", "intent", "input", "methodology", "output"],
+  "properties": {
+    "mtp_version": {
+      "type": "string",
+      "const": "0.1",
+      "description": "MTP specification version"
+    },
+    "package": {
+      "type": "object",
+      "required": ["id", "name", "version", "created", "author"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for this MTP Package"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Human-readable methodology name"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Semantic version of the methodology (major.minor.patch)"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of package creation"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of last update"
+        },
+        "author": {
+          "type": "string",
+          "description": "Author name or identifier"
+        },
+        "source_platform": {
+          "type": "string",
+          "description": "AI platform where methodology was developed (informational only)"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Searchable tags for categorization"
+        }
+      }
+    },
+    "intent": {
+      "type": "object",
+      "required": ["goal"],
+      "properties": {
+        "goal": {
+          "type": "string",
+          "minLength": 10,
+          "description": "High-level description of what this methodology achieves — the 'why'"
+        },
+        "context": {
+          "type": "string",
+          "description": "Domain knowledge, regulatory context, and business rules that shaped the approach"
+        },
+        "success_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "Measurable criteria for successful application"
+        },
+        "non_goals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "What this methodology explicitly does NOT attempt"
+        }
+      }
+    },
+    "input": {
+      "type": "object",
+      "required": ["description"],
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Description of expected input data characteristics"
+        },
+        "schema": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fieldDefinition"
+          },
+          "description": "Expected input data fields"
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Assumptions about data quality, completeness, format"
+        },
+        "preprocessing": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/preprocessingStep"
+          },
+          "description": "Required preprocessing steps before methodology application"
+        }
+      }
+    },
+    "methodology": {
+      "type": "object",
+      "required": ["approach", "steps"],
+      "properties": {
+        "approach": {
+          "type": "string",
+          "minLength": 10,
+          "description": "High-level description of the approach and why it was chosen"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/methodologyStep"
+          },
+          "minItems": 1,
+          "description": "Ordered sequence of methodology steps"
+        }
+      }
+    },
+    "edge_cases": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/edgeCase"
+      },
+      "description": "Known edge cases and their handling"
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/constraint"
+      },
+      "description": "Hard constraints that must be enforced"
+    },
+    "output": {
+      "type": "object",
+      "required": ["description"],
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "What the methodology produces"
+        },
+        "schema": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fieldDefinition"
+          },
+          "description": "Output data fields"
+        },
+        "quality_checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["check", "failure_action"],
+            "properties": {
+              "check": {
+                "type": "string",
+                "description": "Validation rule for output"
+              },
+              "failure_action": {
+                "type": "string",
+                "description": "What to do if check fails"
+              }
+            }
+          },
+          "description": "Output quality validation rules"
+        }
+      }
+    },
+    "dead_ends": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/deadEnd"
+      },
+      "description": "Approaches that were tried and abandoned — prevents target system from repeating mistakes"
+    },
+    "adaptation": {
+      "type": "object",
+      "properties": {
+        "flexibility": {
+          "type": "string",
+          "description": "Which parts can be adjusted by the target system"
+        },
+        "fixed_elements": {
+          "type": "string",
+          "description": "Which parts must NOT be changed"
+        },
+        "target_requirements": {
+          "type": "string",
+          "description": "Minimum capabilities required of the target system"
+        }
+      },
+      "description": "Guidance for adapting the methodology to different target systems"
+    }
+  },
+  "$defs": {
+    "fieldDefinition": {
+      "type": "object",
+      "required": ["field", "type", "description"],
+      "properties": {
+        "field": {
+          "type": "string",
+          "description": "Field name"
+        },
+        "type": {
+          "type": "string",
+          "description": "Data type (string, number, date, boolean, array, object, binary, enum, datetime, integer)"
+        },
+        "description": {
+          "type": "string",
+          "description": "What this field represents"
+        },
+        "required": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether this field is mandatory"
+        },
+        "constraints": {
+          "type": "string",
+          "description": "Validation rules for this field"
+        }
+      }
+    },
+    "preprocessingStep": {
+      "type": "object",
+      "required": ["step", "action", "rationale"],
+      "properties": {
+        "step": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Step number"
+        },
+        "action": {
+          "type": "string",
+          "description": "What to do"
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Why this preprocessing is necessary"
+        }
+      }
+    },
+    "methodologyStep": {
+      "type": "object",
+      "required": ["step", "name", "action"],
+      "properties": {
+        "step": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Step number"
+        },
+        "name": {
+          "type": "string",
+          "description": "Short descriptive name"
+        },
+        "action": {
+          "type": "string",
+          "minLength": 10,
+          "description": "Detailed description — specific enough for an LLM to execute"
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Why this step exists and why it's done this way"
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "description": "Step numbers this step depends on"
+        },
+        "decision_points": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["condition", "then"],
+            "properties": {
+              "condition": {
+                "type": "string",
+                "description": "Condition description"
+              },
+              "then": {
+                "type": "string",
+                "description": "Action to take"
+              },
+              "rationale": {
+                "type": "string",
+                "description": "Why this branch exists"
+              }
+            }
+          },
+          "description": "Conditional logic within the step"
+        },
+        "validation": {
+          "type": "string",
+          "description": "How to verify this step was executed correctly"
+        }
+      }
+    },
+    "edgeCase": {
+      "type": "object",
+      "required": ["scenario", "handling"],
+      "properties": {
+        "scenario": {
+          "type": "string",
+          "description": "Description of the edge case"
+        },
+        "handling": {
+          "type": "string",
+          "description": "How to handle it"
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Why this handling was chosen"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["critical", "warning", "info"],
+          "description": "Impact severity"
+        }
+      }
+    },
+    "constraint": {
+      "type": "object",
+      "required": ["type", "description", "enforcement"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["performance", "accuracy", "compliance", "security"],
+          "description": "Constraint category"
+        },
+        "description": {
+          "type": "string",
+          "description": "Constraint description"
+        },
+        "enforcement": {
+          "type": "string",
+          "description": "How the target system should enforce this"
+        }
+      }
+    },
+    "deadEnd": {
+      "type": "object",
+      "required": ["approach", "reason", "lesson"],
+      "properties": {
+        "approach": {
+          "type": "string",
+          "description": "Description of the approach that was tried"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Why it didn't work"
+        },
+        "lesson": {
+          "type": "string",
+          "description": "What was learned — prevents repeating the mistake"
+        }
+      }
+    }
+  }
+}
