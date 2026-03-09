@@ -1,0 +1,111 @@
+execution_report:
+  mtp_package_id: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+  mtp_package_version: "1.0.0"
+  mtp_spec_version: "0.2"
+  target_platform: "azure-openai-gpt-4o"
+  executor: "mtp-run v0.4.0"
+  timestamp: "2026-03-09T13:15:00Z"
+  duration_seconds: 28.4
+
+  overall_status: "deviation"
+  overall_confidence: "medium"
+
+  steps:
+    - step: 1
+      state: "success"
+      validation_result: "pass"
+      duration_seconds: 4.2
+      retries_attempted: 0
+      notes: "Login decline scores computed for all eligible accounts."
+
+    - step: 2
+      state: "success"
+      validation_result: "pass"
+      duration_seconds: 3.8
+      retries_attempted: 0
+      notes: "Sentiment sub-scores computed. Accounts without tickets received default mild-risk score."
+
+    - step: 3
+      state: "deviation"
+      validation_result: "pass"
+      duration_seconds: 7.1
+      retries_attempted: 1
+      deviation:
+        description: "Feature adoption step fell back to previously cached feature catalog after the live feature list endpoint timed out."
+        reason: "The methodology requires a feature universe count. Cached catalog from the same scoring period was used to avoid blocking execution."
+        approved_by: "ops-analyst@example.com"
+      notes: "Deviation preserved score integrity for current-period accounts; drift impact expected to be low."
+
+    - step: 4
+      state: "success"
+      validation_result: "pass"
+      duration_seconds: 2.5
+      retries_attempted: 0
+      notes: "Renewal proximity scores computed for all scored accounts."
+
+    - step: 5
+      state: "success"
+      validation_result: "pass"
+      duration_seconds: 6.1
+      retries_attempted: 0
+      notes: "Composite scoring and ranking completed. Output includes per-signal breakdown and exclusion reasons."
+
+  edge_cases_encountered:
+    - step: 1
+      scenario: "Account created less than 90 days ago — incomplete data window"
+      matched_edge_case: "0"
+      handling_applied: "Normalized login decline to available history and flagged the account as short_history."
+    - step: 2
+      scenario: "Sentiment scores missing for some tickets (pre-computation failed)"
+      matched_edge_case: "2"
+      handling_applied: "Excluded tickets with missing sentiment; one account with >50% missing sentiment received midpoint sub-score and sentiment_unreliable flag."
+
+  novel_situations: []
+
+  dead_ends_prevented:
+    - step: 5
+      dead_end_ref: "0"
+      notes: "Executor did not reintroduce the 40/20/20/20 weighting model despite temporary uncertainty after the step 3 deviation."
+
+  quality_checks:
+    - check: "All input accounts present in output (scored or excluded)"
+      result: "pass"
+      is_blocking: true
+      notes: "147 scored + 6 excluded = 153 total input accounts."
+    - check: "All composite scores are 0-100 and equal sum of sub-scores"
+      result: "pass"
+      is_blocking: true
+      notes: "Spot-check and aggregate validation passed."
+    - check: "Output is sorted by churn_risk descending"
+      result: "pass"
+      is_blocking: false
+      notes: "Ranking order verified after final assembly."
+
+  policy_compliance:
+    data_leaked: false
+    pii_detected: false
+    notes: "Execution used only permitted fields from the input schema."
+
+  drift_score:
+    composite: 0.96
+    baseline_type: "reference_run"
+    baseline_ref: "reports/churn-risk-scoring-reference-run-2026-03-08.yaml"
+    components:
+      step_fidelity: 0.80
+      deviation_rate: 0.80
+      validation_pass_rate: 1.00
+      output_quality: 1.00
+      edge_case_coverage: 1.00
+      novel_situation_rate: 1.00
+      dead_end_avoidance: 1.00
+    weights_used:
+      step_fidelity: 0.25
+      deviation_rate: 0.15
+      validation_pass_rate: 0.25
+      output_quality: 0.20
+      edge_case_coverage: 0.10
+      novel_situation_rate: 0.03
+      dead_end_avoidance: 0.02
+
+  report_hash: "sha256:9e9bd52d4509f7b643403bf8a8c089527e1ac15efebc2d722f2620a6efb9c1c2"
+  signature: "optional-demo-signature"

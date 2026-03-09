@@ -315,6 +315,7 @@ dead_ends:
     provenance:
       source_type: "conversation"
       source_ref: "session-2026-03-08:msg-26-30"
+      confidence: "high"
 
   - approach: "Including NPS survey scores as a fifth signal"
     reason: "NPS data is only available for 30% of accounts (survey response rate). Including it created a two-tier scoring system where accounts with NPS data had more accurate scores, which the CS team found confusing and unfair."
@@ -322,6 +323,7 @@ dead_ends:
     provenance:
       source_type: "conversation"
       source_ref: "session-2026-03-07:msg-8-14"
+      confidence: "high"
 
   - approach: "Binary churn/no-churn classification instead of 0-100 scoring"
     reason: "CS team needs prioritization, not just identification. A binary classifier doesn't help when you have 50 at-risk accounts and can only reach 10 this week."
@@ -329,6 +331,7 @@ dead_ends:
     provenance:
       source_type: "conversation"
       source_ref: "session-2026-03-07:msg-3-6"
+      confidence: "high"
 
 adaptation:
   flexibility: |

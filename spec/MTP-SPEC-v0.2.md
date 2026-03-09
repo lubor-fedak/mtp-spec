@@ -5,6 +5,7 @@
 **Author:** Lubor Fedák  
 **Date:** 2026-03-09  
 **Status:** Draft  
+**Patch Release:** 0.2.1  
 **License:** Apache 2.0  
 **Supersedes:** v0.1
 
@@ -220,9 +221,10 @@ methodology:
           rationale: "Why this branch exists"
       execution_semantics:
         on_success: "proceed"
-        on_failure: "halt | skip_with_flag | retry_once | escalate"
+        on_failure: "halt | skip_with_flag | retry | escalate"
         on_deviation: "flag_and_proceed | halt | ask_human"
         timeout: "optional — max duration for this step"
+        max_retries: 1  # required when on_failure is "retry"
       validation: |
         How to verify this step was executed correctly.
         Must produce a boolean pass/fail, not a subjective assessment.
@@ -242,6 +244,7 @@ edge_cases:
     provenance:
       source_type: "conversation"
       source_ref: "Where this edge case was discovered"
+      confidence: "high"
 
 constraints:
   - type: "performance | accuracy | compliance | security"
@@ -269,6 +272,7 @@ dead_ends:
     provenance:
       source_type: "conversation"
       source_ref: "Where this was tried and rejected"
+      confidence: "high"
 
 # --- SECTION 7: ADAPTATION NOTES ---
 adaptation:
@@ -325,7 +329,7 @@ Provenance enables trust, reproducibility, and continuous improvement. When a st
 
 ### 5.2 Provenance Structure
 
-Every step, edge case, and dead end in an MTP Package carries a `provenance` block:
+Every step, edge case, and dead end in an MTP Package carries a `provenance` block. At minimum, `source_type`, `source_ref`, and `confidence` are required. `notes` is optional but recommended:
 
 ```yaml
 provenance:
@@ -452,6 +456,9 @@ execution_report:
         description: ""     # empty if no deviation
         reason: ""
         approved_by: ""     # human approver if escalated
+      failure_reason: ""    # required when state = failure
+      failure_blocking: true # required when state = failure
+      skip_reason: ""       # required when state = skipped
       notes: ""
 
   edge_cases_encountered:
@@ -490,10 +497,10 @@ Note: `improvised` is not a valid `action_taken` for novel situations. Per pipel
 The `overall_status` field is deterministic, not subjective. It is derived from step states using these rules, applied in priority order:
 
 1. If any step is `escalated` → overall_status is `escalated`.
-2. If any step is `failure` and that step's `on_failure` is `halt` → overall_status is `failure`.
+2. If any step is `failure` and `failure_blocking: true` → overall_status is `failure`.
 3. If any blocking `quality_check` failed → overall_status is `failure`.
 4. If any step is `deviation` → overall_status is `deviation`.
-5. If any step is `partial` or `skipped` → overall_status is `partial`.
+5. If any step is `partial`, `skipped`, or `failure` with `failure_blocking: false` → overall_status is `partial`.
 6. If all steps are `success` → overall_status is `success`.
 
 ### 7.3 Report Signing
@@ -675,10 +682,12 @@ MTP v0.2 requirements:
    - source_type: conversation
    - source_ref: message numbers or ranges that produced this element
    - confidence: high/medium/low based on how directly it maps
+   - notes: optional explanation when derivation needs clarification
 
 3. EXECUTION SEMANTICS: For each step, define:
-   - on_failure: halt | skip_with_flag | retry_once | escalate
+   - on_failure: halt | skip_with_flag | retry | escalate
    - on_deviation: flag_and_proceed | halt | ask_human
+   - if on_failure is retry, include max_retries >= 1
    Include these based on the criticality evident in the conversation.
 
 4. DECISION POINTS: Every if/then/else with rationale.

@@ -2,6 +2,25 @@
 
 All notable changes to the MTP specification are documented in this file.
 
+## [0.2.1] — 2026-03-09
+
+### Schema/spec alignment fixes
+- Standardized `on_failure` semantics on `retry` across the spec, examples, and package schema. Removed stale `retry_once` references from normative guidance.
+- Added strict conditional validation for `max_retries`: when `on_failure` is `retry`, `max_retries` is required and must be >= 1.
+- Tightened provenance requirements in the package schema: `source_ref` and `confidence` are now required inside provenance blocks; `edge_cases` and `dead_ends` now require provenance.
+
+### Execution report hardening
+- Added `failure_blocking` to step reports so overall execution status can be derived from report data rather than external package context.
+- Added conditional validation in the execution report schema:
+  - `failure` steps require `failure_reason` and `failure_blocking`
+  - `skipped` steps require `skip_reason`
+  - `deviation` steps require structured deviation details
+- Added report-level derivation checks for `overall_status` based on escalations, blocking failures, blocking quality check failures, deviations, and partial/skipped outcomes.
+
+### Release metadata
+- Marked the repository state as patch release **0.2.1** of the normative **v0.2** specification.
+- Added a reference v0.2 execution report example to complement the v0.2 package example.
+
 ## [0.2] — 2026-03-09
 
 ### Positioning shift
@@ -22,7 +41,7 @@ All notable changes to the MTP specification are documented in this file.
 ### Execution Semantics (NEW)
 - Defined six strict execution states: `success`, `partial`, `deviation`, `failure`, `skipped`, `escalated`.
 - Each state has a precise definition and mandatory reporting requirements.
-- Per-step execution policies: `on_failure` (halt/skip_with_flag/retry_once/escalate), `on_deviation` (flag_and_proceed/halt/ask_human).
+- Per-step execution policies: `on_failure` (halt/skip_with_flag/retry/escalate), `on_deviation` (flag_and_proceed/halt/ask_human).
 - Pipeline-level execution rules: dependency handling, blocking quality checks, dead end pre-loading, novel situation escalation.
 
 ### Redaction Discipline (NEW)

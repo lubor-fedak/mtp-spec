@@ -100,7 +100,359 @@
           "type": "string",
           "description": "Optional cryptographic signature"
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "steps": {
+                "contains": {
+                  "type": "object",
+                  "properties": {
+                    "state": { "const": "escalated" }
+                  },
+                  "required": ["state"]
+                }
+              }
+            },
+            "required": ["steps"]
+          },
+          "then": {
+            "properties": {
+              "overall_status": { "const": "escalated" }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "steps": {
+                    "not": {
+                      "contains": {
+                        "type": "object",
+                        "properties": {
+                          "state": { "const": "escalated" }
+                        },
+                        "required": ["state"]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "steps": {
+                    "contains": {
+                      "type": "object",
+                      "properties": {
+                        "state": { "const": "failure" },
+                        "failure_blocking": { "const": true }
+                      },
+                      "required": ["state", "failure_blocking"]
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "overall_status": { "const": "failure" }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "steps": {
+                    "not": {
+                      "contains": {
+                        "type": "object",
+                        "properties": {
+                          "state": { "const": "escalated" }
+                        },
+                        "required": ["state"]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "steps": {
+                    "not": {
+                      "contains": {
+                        "type": "object",
+                        "properties": {
+                          "state": { "const": "failure" },
+                          "failure_blocking": { "const": true }
+                        },
+                        "required": ["state", "failure_blocking"]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "quality_checks": {
+                    "contains": {
+                      "type": "object",
+                      "properties": {
+                        "result": { "const": "fail" },
+                        "is_blocking": { "const": true }
+                      },
+                      "required": ["result", "is_blocking"]
+                    }
+                  }
+                },
+                "required": ["quality_checks"]
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "overall_status": { "const": "failure" }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "steps": {
+                    "not": {
+                      "contains": {
+                        "type": "object",
+                        "properties": {
+                          "state": { "const": "escalated" }
+                        },
+                        "required": ["state"]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "steps": {
+                    "not": {
+                      "contains": {
+                        "type": "object",
+                        "properties": {
+                          "state": { "const": "failure" },
+                          "failure_blocking": { "const": true }
+                        },
+                        "required": ["state", "failure_blocking"]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "quality_checks": {
+                    "not": {
+                      "contains": {
+                        "type": "object",
+                        "properties": {
+                          "result": { "const": "fail" },
+                          "is_blocking": { "const": true }
+                        },
+                        "required": ["result", "is_blocking"]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "steps": {
+                    "contains": {
+                      "type": "object",
+                      "properties": {
+                        "state": { "const": "deviation" }
+                      },
+                      "required": ["state"]
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "overall_status": { "const": "deviation" }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "steps": {
+                    "not": {
+                      "contains": {
+                        "type": "object",
+                        "properties": {
+                          "state": { "const": "escalated" }
+                        },
+                        "required": ["state"]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "steps": {
+                    "not": {
+                      "contains": {
+                        "type": "object",
+                        "properties": {
+                          "state": { "const": "failure" },
+                          "failure_blocking": { "const": true }
+                        },
+                        "required": ["state", "failure_blocking"]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "quality_checks": {
+                    "not": {
+                      "contains": {
+                        "type": "object",
+                        "properties": {
+                          "result": { "const": "fail" },
+                          "is_blocking": { "const": true }
+                        },
+                        "required": ["result", "is_blocking"]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "steps": {
+                    "not": {
+                      "contains": {
+                        "type": "object",
+                        "properties": {
+                          "state": { "const": "deviation" }
+                        },
+                        "required": ["state"]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "steps": {
+                        "contains": {
+                          "type": "object",
+                          "properties": {
+                            "state": { "const": "partial" }
+                          },
+                          "required": ["state"]
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "steps": {
+                        "contains": {
+                          "type": "object",
+                          "properties": {
+                            "state": { "const": "skipped" }
+                          },
+                          "required": ["state"]
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "steps": {
+                        "contains": {
+                          "type": "object",
+                          "properties": {
+                            "state": { "const": "failure" },
+                            "failure_blocking": { "const": false }
+                          },
+                          "required": ["state", "failure_blocking"]
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "overall_status": { "const": "partial" }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "steps": {
+                    "not": {
+                      "contains": {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "enum": ["escalated", "failure", "deviation", "partial", "skipped"]
+                          }
+                        },
+                        "required": ["state"]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "quality_checks": {
+                    "not": {
+                      "contains": {
+                        "type": "object",
+                        "properties": {
+                          "result": { "const": "fail" },
+                          "is_blocking": { "const": true }
+                        },
+                        "required": ["result", "is_blocking"]
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "overall_status": { "const": "success" }
+            }
+          }
+        }
+      ]
     }
   },
   "$defs": {
@@ -142,12 +494,62 @@
           "type": "string",
           "description": "Required when state is 'failure'. Explains why the step failed."
         },
+        "failure_blocking": {
+          "type": "boolean",
+          "description": "Required when state is 'failure'. true if the failure halts execution; false if execution continues with degraded fidelity."
+        },
         "skip_reason": {
           "type": "string",
           "description": "Required when state is 'skipped'. Must be 'unmet_dependency' or reference adaptation notes."
         },
         "notes": { "type": "string" }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": { "const": "failure" }
+            },
+            "required": ["state"]
+          },
+          "then": {
+            "required": ["failure_reason", "failure_blocking"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": { "const": "skipped" }
+            },
+            "required": ["state"]
+          },
+          "then": {
+            "required": ["skip_reason"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": { "const": "deviation" }
+            },
+            "required": ["state"]
+          },
+          "then": {
+            "required": ["deviation"],
+            "properties": {
+              "deviation": {
+                "type": "object",
+                "required": ["description", "reason"],
+                "properties": {
+                  "description": { "type": "string" },
+                  "reason": { "type": "string" },
+                  "approved_by": { "type": "string", "description": "Human approver if escalated and resolved" }
+                }
+              }
+            }
+          }
+        }
+      ]
     },
     "edgeCaseEncountered": {
       "type": "object",

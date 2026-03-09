@@ -100,7 +100,7 @@
   "$defs": {
     "provenance": {
       "type": "object",
-      "required": ["source_type"],
+      "required": ["source_type", "source_ref", "confidence"],
       "properties": {
         "source_type": {
           "type": "string",
@@ -146,7 +146,26 @@
           "minimum": 0,
           "default": 1
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "on_failure": { "const": "retry" }
+            },
+            "required": ["on_failure"]
+          },
+          "then": {
+            "required": ["max_retries"],
+            "properties": {
+              "max_retries": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      ]
     },
     "fieldDefinition": {
       "type": "object",
@@ -200,7 +219,7 @@
     },
     "edgeCase": {
       "type": "object",
-      "required": ["scenario", "handling"],
+      "required": ["scenario", "handling", "provenance"],
       "properties": {
         "scenario": { "type": "string" },
         "handling": { "type": "string" },
@@ -220,7 +239,7 @@
     },
     "deadEnd": {
       "type": "object",
-      "required": ["approach", "reason", "lesson"],
+      "required": ["approach", "reason", "lesson", "provenance"],
       "properties": {
         "approach": { "type": "string" },
         "reason": { "type": "string" },

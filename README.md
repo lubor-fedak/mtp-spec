@@ -62,7 +62,7 @@ An MTP Package captures **the recipe without the ingredients** — intent, decis
 
 ## Specification
 
-📄 **[MTP Specification v0.2](spec/MTP-SPEC-v0.2.md)** — Full specification: lifecycle, package format, provenance, execution semantics, redaction discipline, drift measurement, conformance levels, and benchmark framework.
+📄 **[MTP Specification v0.2](spec/MTP-SPEC-v0.2.md)** — Full specification: lifecycle, package format, provenance, execution semantics, redaction discipline, drift measurement, conformance levels, and benchmark framework. Current repository patch release: **0.2.1**.
 
 📄 **[MTP Specification v0.1](spec/MTP-SPEC-v0.1.md)** — Original draft (superseded).
 
@@ -71,7 +71,7 @@ An MTP Package captures **the recipe without the ingredients** — intent, decis
 | Version | Status | Focus |
 |---------|--------|-------|
 | v0.1 | ✅ Released | YAML format, manual extraction/application, JSON Schema |
-| v0.2 | ✅ Current | Lifecycle, provenance, execution semantics, redaction, drift, conformance |
+| v0.2.x | ✅ Current | Lifecycle, provenance, execution semantics, redaction, drift, conformance. Latest patch: 0.2.1 |
 | v0.3 | Planned | `mtp-lint` validator, redaction checker, canonical examples |
 | v0.4 | Planned | `mtp-run` reference runtime CLI, platform adapters |
 | v0.5 | Planned | Drift scoring engine, conformance test suite |
