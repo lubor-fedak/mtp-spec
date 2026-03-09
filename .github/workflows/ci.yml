@@ -19,13 +19,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install mtp-lint
-        run: |
-          cd tools/mtp-lint
-          pip install -e ".[dev]"
+        run: pip install -e "tools/mtp-lint[dev]"
       - name: Run tests
-        run: |
-          cd tools/mtp-lint
-          pytest tests/ -v --tb=short
+        run: pytest tools/mtp-lint/tests/ -v --tb=short
       - name: Validate example package
         run: mtp-lint check examples/churn-risk-scoring-v0.2.yaml --format json
 
@@ -41,13 +37,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install mtp-run
-        run: |
-          cd tools/mtp-run
-          pip install -e ".[dev]"
+        run: pip install -e "tools/mtp-run[dev]"
       - name: Run tests
-        run: |
-          cd tools/mtp-run
-          pytest tests/ -v --tb=short
+        run: pytest tools/mtp-run/tests/ -v --tb=short
       - name: Execute mock run
         run: |
           mtp-run exec examples/churn-risk-scoring-v0.2.yaml \
@@ -67,16 +59,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install tools
         run: |
-          cd tools/mtp-lint
-          pip install -e .
-          cd ../mtp-run
-          pip install -e .
-          cd ../mtp-conformance
-          pip install -e ".[dev]"
+          pip install -e tools/mtp-lint
+          pip install -e tools/mtp-run
+          pip install -e "tools/mtp-conformance[dev]"
       - name: Run tests
-        run: |
-          cd tools/mtp-conformance
-          pytest tests/ -v --tb=short
+        run: pytest tools/mtp-conformance/tests/ -v --tb=short
 
   conformance-levels:
     name: conformance-${{ matrix.level }}
@@ -91,12 +78,9 @@ jobs:
           python-version: "3.12"
       - name: Install tools
         run: |
-          cd tools/mtp-lint
-          pip install -e .
-          cd ../mtp-run
-          pip install -e .
-          cd ../mtp-conformance
-          pip install -e .
+          pip install -e tools/mtp-lint
+          pip install -e tools/mtp-run
+          pip install -e tools/mtp-conformance
       - name: Run conformance
         run: |
           mtp-conformance run --level ${{ matrix.level }} --format json
@@ -111,8 +95,8 @@ jobs:
           python-version: "3.12"
       - name: Install tools
         run: |
-          cd tools/mtp-lint && pip install -e .
-          cd ../mtp-run && pip install -e .
+          pip install -e tools/mtp-lint
+          pip install -e tools/mtp-run
       - name: Validate all examples
         run: |
           mtp-lint validate examples/churn-risk-scoring-v0.2.yaml

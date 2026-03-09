@@ -4,35 +4,27 @@ from __future__ import annotations
 
 import hashlib
 import json
-import sys
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-REPO_ROOT = Path(__file__).resolve().parents[4]
-for source_path in (
-    REPO_ROOT / "tools" / "mtp-lint" / "src",
-    REPO_ROOT / "tools" / "mtp-run" / "src",
-):
-    source_str = str(source_path)
-    if source_str not in sys.path:
-        sys.path.insert(0, source_str)
-
-from mtp_conformance.fixtures import FixtureManifest, discover_fixtures  # noqa: E402
-from mtp_lint.policy_gate import check_policy  # noqa: E402
-from mtp_lint.redaction_scanner import scan_all  # noqa: E402
-from mtp_lint.schema_validator import (  # noqa: E402
+from mtp_conformance.fixtures import FixtureManifest, discover_fixtures
+from mtp_lint.policy_gate import check_policy
+from mtp_lint.redaction_scanner import scan_all
+from mtp_lint.schema_validator import (
     detect_artifact_type,
     detect_version,
     load_package,
     validate_schema,
 )
-from mtp_run.adapters import get_adapter  # noqa: E402
-from mtp_run.drift import compare_reports, compute_report_drift  # noqa: E402
-from mtp_run.executor import execute_package  # noqa: E402
-from mtp_run.io_utils import load_artifact, validate_execution_report, validate_package  # noqa: E402
-from mtp_run.report_builder import build_execution_report  # noqa: E402
+from mtp_run.adapters import get_adapter
+from mtp_run.drift import compare_reports, compute_report_drift
+from mtp_run.executor import execute_package
+from mtp_run.io_utils import load_artifact, validate_execution_report, validate_package
+from mtp_run.report_builder import build_execution_report, mock_quality_checks
+
+REPO_ROOT = Path(__file__).parent.parent.parent.parent.parent
 
 
 LEVEL_ORDER = {"l1": 1, "l2": 2, "l3": 3}
@@ -376,15 +368,7 @@ def _run_provenance_fixture(fixture: FixtureManifest) -> dict[str, Any]:
 def _quality_checks_for_fixture(package: dict[str, Any], adapter_name: str) -> list[dict[str, Any]]:
     if adapter_name != "mock":
         return []
-    quality_checks = []
-    for quality_check in package.get("output", {}).get("quality_checks", []):
-        quality_checks.append({
-            "check": quality_check.get("check", ""),
-            "result": "pass",
-            "is_blocking": bool(quality_check.get("is_blocking", False)),
-            "notes": "Conformance mock execution marked this quality check as passed.",
-        })
-    return quality_checks
+    return mock_quality_checks(package)
 
 
 def _required_path(fixture: FixtureManifest, key: str) -> Path:

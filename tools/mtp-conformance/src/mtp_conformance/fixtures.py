@@ -8,6 +8,8 @@ from typing import Any
 
 import yaml
 
+VALID_LEVELS = {"l1", "l2", "l3"}
+
 
 @dataclass(frozen=True)
 class FixtureManifest:
@@ -28,7 +30,7 @@ class FixtureManifest:
 
 
 def default_fixtures_root() -> Path:
-    return Path(__file__).resolve().parents[4] / "conformance" / "fixtures"
+    return Path(__file__).parent.parent.parent.parent.parent / "conformance" / "fixtures"
 
 
 def discover_fixtures(fixtures_root: Path | None = None) -> list[FixtureManifest]:
@@ -51,9 +53,16 @@ def load_fixture(manifest_path: str | Path) -> FixtureManifest:
     if missing:
         raise ValueError(f"Fixture manifest missing required fields {missing}: {path}")
 
+    level = str(data["level"])
+    if level not in VALID_LEVELS:
+        raise ValueError(
+            f"Invalid fixture level '{level}' in {path}. "
+            f"Must be one of: {', '.join(sorted(VALID_LEVELS))}"
+        )
+
     return FixtureManifest(
         id=str(data["id"]),
-        level=str(data["level"]),
+        level=level,
         kind=str(data["kind"]),
         description=str(data["description"]),
         manifest_path=path.resolve(),

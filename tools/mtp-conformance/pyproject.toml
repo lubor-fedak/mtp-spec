@@ -24,6 +24,8 @@ dependencies = [
     "click>=8.0",
     "jsonschema>=4.20.0",
     "pyyaml>=6.0",
+    "mtp-lint",
+    "mtp-run",
 ]
 
 [project.optional-dependencies]

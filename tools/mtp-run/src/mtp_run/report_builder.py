@@ -132,6 +132,23 @@ def build_execution_report(
     return report
 
 
+def mock_quality_checks(package: dict) -> list[dict]:
+    """Generate mock quality check results for deterministic testing.
+
+    When using the mock adapter, all quality checks defined in the package
+    are automatically marked as passed.
+    """
+    checks = []
+    for quality_check in package.get("output", {}).get("quality_checks", []):
+        checks.append({
+            "check": quality_check.get("check", ""),
+            "result": "pass",
+            "is_blocking": bool(quality_check.get("is_blocking", False)),
+            "notes": "Mock adapter reference run marked this quality check as passed.",
+        })
+    return checks
+
+
 def format_report_yaml(report: dict) -> str:
     """Format execution report as YAML."""
     return yaml.dump(report, default_flow_style=False, sort_keys=False, allow_unicode=True)

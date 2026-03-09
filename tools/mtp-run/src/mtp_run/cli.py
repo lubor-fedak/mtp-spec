@@ -13,22 +13,7 @@ from mtp_run.adapters import get_adapter, list_adapter_statuses
 from mtp_run.drift import compare_reports, compute_report_drift
 from mtp_run.executor import execute_package
 from mtp_run.io_utils import dump_yaml, load_artifact, validate_execution_report, validate_package
-from mtp_run.report_builder import build_execution_report
-
-
-def _quality_checks_for_adapter(package: dict, adapter_name: str) -> list[dict]:
-    if adapter_name != "mock":
-        return []
-
-    checks = []
-    for quality_check in package.get("output", {}).get("quality_checks", []):
-        checks.append({
-            "check": quality_check.get("check", ""),
-            "result": "pass",
-            "is_blocking": bool(quality_check.get("is_blocking", False)),
-            "notes": "Mock adapter reference run marked this quality check as passed.",
-        })
-    return checks
+from mtp_run.report_builder import build_execution_report, mock_quality_checks
 
 
 def _run_execution(
@@ -83,7 +68,7 @@ def _run_execution(
         raw_results=raw_results,
         duration_seconds=duration,
         executor_id=f"mtp-run v{__version__}",
-        quality_checks=_quality_checks_for_adapter(package, adapter_name),
+        quality_checks=mock_quality_checks(package) if adapter_name == "mock" else [],
         baseline_ref=baseline_ref,
         baseline_type=baseline_type,
         baseline_report=baseline_report,
