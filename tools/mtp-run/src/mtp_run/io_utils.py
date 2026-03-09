@@ -11,7 +11,7 @@ import jsonschema
 import yaml
 
 
-SCHEMA_DIR = Path(__file__).resolve().parents[4] / "schema"
+SCHEMA_DIR = Path(__file__).parent.parent.parent.parent.parent / "schema"
 
 
 def load_artifact(path: str | Path) -> dict[str, Any]:

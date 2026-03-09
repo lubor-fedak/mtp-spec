@@ -11,7 +11,7 @@ import jsonschema
 import yaml
 
 
-SCHEMA_DIR = Path(__file__).resolve().parents[4] / "schema"
+SCHEMA_DIR = Path(__file__).parent.parent.parent.parent.parent / "schema"
 
 SCHEMAS = {
     "package-v0.1": "mtp-package-v0.1.json",
