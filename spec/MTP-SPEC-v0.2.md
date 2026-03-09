@@ -285,15 +285,22 @@ policy:
   redaction:
     status: "passed | failed | not_run"
     last_checked: "2026-03-09T10:00:00Z"
-    checker: "mtp-lint v0.2 | manual | custom"
+    checker: "mtp-lint"
+    checker_version: "0.2.0"
     findings: []  # list of any flagged content, empty = clean
+    report_hash: ""  # SHA-256 of full scan report
+    evidence_ref: ""  # URI to full scan report artifact
   pii_scan:
     status: "passed | failed | not_run"
     method: "regex | ner | manual"
     findings: []
   secrets_scan:
     status: "passed | failed | not_run"
-    patterns_checked: ["api_key", "token", "password", "connection_string"]
+    patterns_checked: ["api_key", "token", "password", "connection_string", "bearer"]
+    findings: []
+  client_identifier_scan:
+    status: "passed | failed | not_run"
+    method: "dictionary | manual"
     findings: []
   regulated_content:
     status: "passed | failed | not_run"
@@ -388,16 +395,16 @@ Each step declares its `execution_semantics`:
 ```yaml
 execution_semantics:
   on_success: "proceed"                    # always proceed
-  on_failure: "halt | skip_with_flag | retry_once | escalate"
+  on_failure: "halt | skip_with_flag | retry | escalate"
   on_deviation: "flag_and_proceed | halt | ask_human"
   timeout: "30s | 5m | none"              # optional time bound
-  max_retries: 1                           # for retry_once
+  max_retries: 1                           # used when on_failure is "retry"
 ```
 
 **on_failure** defines what happens when the step fails:
 - `halt` — Stop execution. Report final state. This is the default.
 - `skip_with_flag` — Skip this step. Downstream steps that depend on it are also skipped. Flag prominently in report.
-- `retry_once` — Retry the step once. If it fails again, apply `halt`.
+- `retry` — Retry the step up to `max_retries` times. If all retries fail, apply `halt`. The `max_retries` field is required when `on_failure` is `retry` and must be >= 1.
 - `escalate` — Pause execution and request human decision.
 
 **on_deviation** defines what happens when the step completes but deviates from the prescribed action:
@@ -433,7 +440,7 @@ execution_report:
   timestamp: "2026-03-09T14:00:00Z"
   duration_seconds: 42
 
-  overall_status: "success | partial | failure"
+  overall_status: "success | partial | deviation | failure | escalated"
   overall_confidence: "high | medium | low | manual_review"
 
   steps:
@@ -456,7 +463,7 @@ execution_report:
   novel_situations:
     - step: 5
       description: "Situation not covered by the methodology"
-      action_taken: "escalated | improvised | skipped"
+      action_taken: "escalated | skipped"
       notes: ""
 
   dead_ends_prevented:
@@ -476,7 +483,20 @@ execution_report:
     notes: ""
 ```
 
-### 7.2 Report Signing
+Note: `improvised` is not a valid `action_taken` for novel situations. Per pipeline rule §6.4.5, novel situations MUST trigger `escalated` state. If a target system cannot escalate (no human-in-the-loop), the step is `skipped` with the novel situation documented. A target system that improvises on a novel situation is non-conformant.
+
+### 7.2 Deriving overall_status
+
+The `overall_status` field is deterministic, not subjective. It is derived from step states using these rules, applied in priority order:
+
+1. If any step is `escalated` → overall_status is `escalated`.
+2. If any step is `failure` and that step's `on_failure` is `halt` → overall_status is `failure`.
+3. If any blocking `quality_check` failed → overall_status is `failure`.
+4. If any step is `deviation` → overall_status is `deviation`.
+5. If any step is `partial` or `skipped` → overall_status is `partial`.
+6. If all steps are `success` → overall_status is `success`.
+
+### 7.3 Report Signing
 
 Execution reports SHOULD be signed (hash or cryptographic signature) to prevent tampering. The signature covers the entire report content. This enables third-party verification that a reported execution actually occurred as described.
 
@@ -490,19 +510,37 @@ Methodology drift is the measurable divergence between expected and actual outco
 
 ### 8.2 Drift Score Components
 
-| Component | Measures | How |
-|-----------|----------|-----|
-| **Step Fidelity** | Did the target execute steps as prescribed? | Ratio of `success` states to total steps |
-| **Deviation Rate** | How often did the target modify prescribed actions? | Count of `deviation` states / total steps |
-| **Validation Pass Rate** | Did step-level validations pass? | Count of `pass` validations / total validations |
-| **Output Quality** | Did the output meet quality checks? | Count of passed quality checks / total checks |
-| **Edge Case Coverage** | Were known edge cases handled correctly? | Count of correctly handled / total encountered |
-| **Novel Situation Rate** | How often did the target encounter unknown situations? | Count of `novel_situations` / total steps |
-| **Dead End Avoidance** | Did the target avoid known dead ends? | Binary: were any dead ends repeated? |
+All components are normalized to a 0.0–1.0 scale where **1.0 = perfect (no drift)** and **0.0 = total drift**. Components where a higher raw value indicates worse performance are inverted.
+
+| Component | Raw Metric | Normalization | Polarity |
+|-----------|-----------|---------------|----------|
+| **Step Fidelity** | `success` states / total steps | Direct (higher is better) | Natural |
+| **Deviation Rate** | `deviation` states / total steps | Inverted: `1.0 - raw` | Inverted |
+| **Validation Pass Rate** | `pass` validations / total validations | Direct (higher is better) | Natural |
+| **Output Quality** | passed quality checks / total checks | Direct (higher is better) | Natural |
+| **Edge Case Coverage** | correctly handled / total encountered | Direct (higher is better) | Natural |
+| **Novel Situation Rate** | `novel_situations` / total steps | Inverted: `1.0 - raw` | Inverted |
+| **Dead End Avoidance** | 1.0 if no dead ends repeated, 0.0 if any repeated | Direct (binary) | Natural |
 
 ### 8.3 Composite Drift Score
 
-The composite drift score is a weighted average of components. Default weights:
+The composite drift score is computed as follows:
+
+**Step 1: Compute raw metrics** from the execution report.
+
+**Step 2: Normalize** each metric to 0.0–1.0. For inverted-polarity metrics, apply `normalized = 1.0 - raw`.
+
+**Step 3: Handle missing data.** If a component cannot be computed (e.g., zero edge cases encountered, so edge case coverage is undefined), exclude it from the weighted average and redistribute its weight proportionally among remaining components.
+
+**Step 4: Compute weighted average.**
+
+```
+drift_score = Σ(weight_i × normalized_i) / Σ(weight_i)
+```
+
+where the sum is over all computable components.
+
+Default weights:
 
 ```yaml
 drift_weights:
@@ -515,7 +553,25 @@ drift_weights:
   dead_end_avoidance: 0.02
 ```
 
-Score range: 0.0 (total drift) to 1.0 (perfect transfer). Weights are configurable per methodology — a compliance-critical methodology may weight `validation_pass_rate` higher, while a creative methodology may weight `deviation_rate` lower.
+Score range: 0.0 (total drift) to 1.0 (perfect transfer). Weights are configurable per methodology — a compliance-critical methodology may weight `validation_pass_rate` higher, while a creative methodology may weight `deviation_rate` lower. Weights MUST sum to 1.0 before redistribution.
+
+**Example computation:**
+
+An execution with 10 steps: 8 success, 1 deviation, 1 partial. 9/10 validations pass. All 3 quality checks pass. 2 edge cases encountered, both handled. No novel situations. No dead ends repeated.
+
+```
+step_fidelity     = 8/10           = 0.80
+deviation_rate    = 1.0 - (1/10)   = 0.90  (inverted)
+validation_pass   = 9/10           = 0.90
+output_quality    = 3/3            = 1.00
+edge_case_cov     = 2/2            = 1.00
+novel_sit_rate    = 1.0 - (0/10)   = 1.00  (inverted)
+dead_end_avoid    = 1.0            = 1.00
+
+drift_score = (0.25×0.80 + 0.15×0.90 + 0.25×0.90 + 0.20×1.00
+             + 0.10×1.00 + 0.03×1.00 + 0.02×1.00) / 1.0
+            = 0.91
+```
 
 ### 8.4 Drift Baselines
 
@@ -556,8 +612,11 @@ policy:
   redaction:
     status: "passed"
     last_checked: "2026-03-09T10:00:00Z"
-    checker: "mtp-lint v0.2"
+    checker: "mtp-lint"
+    checker_version: "0.2.0"
     findings: []
+    report_hash: "sha256:a1b2c3..."
+    evidence_ref: "reports/redaction-2026-03-09.json"
   pii_scan:
     status: "passed"
     method: "ner"
@@ -565,6 +624,14 @@ policy:
   secrets_scan:
     status: "passed"
     patterns_checked: ["api_key", "token", "password", "connection_string", "bearer"]
+    findings: []
+  client_identifier_scan:
+    status: "passed"
+    method: "dictionary"
+    findings: []
+  regulated_content:
+    status: "passed"
+    frameworks: ["GDPR"]
     findings: []
 ```
 

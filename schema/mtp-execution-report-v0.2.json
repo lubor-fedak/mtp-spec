@@ -1,0 +1,234 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lubor-fedak/mtp-spec/schema/mtp-execution-report-v0.2.json",
+  "title": "MTP Execution Report v0.2",
+  "description": "Schema for MTP execution reports produced when a target system executes an MTP Package.",
+  "type": "object",
+  "required": ["execution_report"],
+  "properties": {
+    "execution_report": {
+      "type": "object",
+      "required": [
+        "mtp_package_id",
+        "mtp_package_version",
+        "mtp_spec_version",
+        "target_platform",
+        "executor",
+        "timestamp",
+        "overall_status",
+        "steps"
+      ],
+      "properties": {
+        "mtp_package_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the executed MTP Package"
+        },
+        "mtp_package_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Version of the executed MTP Package"
+        },
+        "mtp_spec_version": {
+          "type": "string",
+          "const": "0.2",
+          "description": "MTP specification version this report conforms to"
+        },
+        "target_platform": {
+          "type": "string",
+          "description": "AI platform that executed the package"
+        },
+        "executor": {
+          "type": "string",
+          "description": "Tool or method used for execution (e.g., 'mtp-run v0.4', 'manual')"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "duration_seconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "overall_status": {
+          "type": "string",
+          "enum": ["success", "partial", "deviation", "failure", "escalated"],
+          "description": "Deterministic derivation: escalated > failure > deviation > partial > success (see spec §7.2)"
+        },
+        "overall_confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low", "manual_review"]
+        },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/stepReport" },
+          "minItems": 1
+        },
+        "edge_cases_encountered": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/edgeCaseEncountered" }
+        },
+        "novel_situations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/novelSituation" }
+        },
+        "dead_ends_prevented": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/deadEndPrevented" }
+        },
+        "quality_checks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/qualityCheckResult" }
+        },
+        "policy_compliance": {
+          "type": "object",
+          "properties": {
+            "data_leaked": { "type": "boolean" },
+            "pii_detected": { "type": "boolean" },
+            "notes": { "type": "string" }
+          }
+        },
+        "drift_score": {
+          "$ref": "#/$defs/driftScore",
+          "description": "Computed drift score when comparing against a baseline"
+        },
+        "report_hash": {
+          "type": "string",
+          "description": "SHA-256 hash of report content for integrity verification"
+        },
+        "signature": {
+          "type": "string",
+          "description": "Optional cryptographic signature"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "stepReport": {
+      "type": "object",
+      "required": ["step", "state"],
+      "properties": {
+        "step": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "state": {
+          "type": "string",
+          "enum": ["success", "partial", "deviation", "failure", "skipped", "escalated"],
+          "description": "Exactly one of the six MTP execution states"
+        },
+        "validation_result": {
+          "type": "string",
+          "enum": ["pass", "fail", "not_applicable"]
+        },
+        "duration_seconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "retries_attempted": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of retries attempted (0 if none)"
+        },
+        "deviation": {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string" },
+            "reason": { "type": "string" },
+            "approved_by": { "type": "string", "description": "Human approver if escalated and resolved" }
+          }
+        },
+        "failure_reason": {
+          "type": "string",
+          "description": "Required when state is 'failure'. Explains why the step failed."
+        },
+        "skip_reason": {
+          "type": "string",
+          "description": "Required when state is 'skipped'. Must be 'unmet_dependency' or reference adaptation notes."
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "edgeCaseEncountered": {
+      "type": "object",
+      "required": ["step", "scenario", "matched_edge_case", "handling_applied"],
+      "properties": {
+        "step": { "type": "integer", "minimum": 1 },
+        "scenario": { "type": "string" },
+        "matched_edge_case": {
+          "type": "string",
+          "description": "Index reference to edge_case in MTP Package, or 'novel'"
+        },
+        "handling_applied": { "type": "string" }
+      }
+    },
+    "novelSituation": {
+      "type": "object",
+      "required": ["step", "description", "action_taken"],
+      "properties": {
+        "step": { "type": "integer", "minimum": 1 },
+        "description": { "type": "string" },
+        "action_taken": {
+          "type": "string",
+          "enum": ["escalated", "skipped"],
+          "description": "Only 'escalated' or 'skipped' are valid. 'improvised' is non-conformant."
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "deadEndPrevented": {
+      "type": "object",
+      "required": ["step", "dead_end_ref"],
+      "properties": {
+        "step": { "type": "integer", "minimum": 1 },
+        "dead_end_ref": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    },
+    "qualityCheckResult": {
+      "type": "object",
+      "required": ["check", "result", "is_blocking"],
+      "properties": {
+        "check": { "type": "string" },
+        "result": { "type": "string", "enum": ["pass", "fail"] },
+        "is_blocking": { "type": "boolean" },
+        "notes": { "type": "string" }
+      }
+    },
+    "driftScore": {
+      "type": "object",
+      "properties": {
+        "composite": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Weighted average drift score. 1.0 = perfect, 0.0 = total drift."
+        },
+        "baseline_type": {
+          "type": "string",
+          "enum": ["reference_run", "self_comparison", "temporal_comparison"]
+        },
+        "baseline_ref": {
+          "type": "string",
+          "description": "Reference to the baseline execution report"
+        },
+        "components": {
+          "type": "object",
+          "properties": {
+            "step_fidelity": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "deviation_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Already inverted: 1.0 = no deviations" },
+            "validation_pass_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "output_quality": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "edge_case_coverage": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0, "description": "null if no edge cases encountered" },
+            "novel_situation_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Already inverted: 1.0 = no novel situations" },
+            "dead_end_avoidance": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Binary: 1.0 or 0.0" }
+          }
+        },
+        "weights_used": {
+          "type": "object",
+          "description": "Weights used for this computation (after redistribution for missing components)"
+        }
+      }
+    }
+  }
+}

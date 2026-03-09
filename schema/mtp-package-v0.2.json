@@ -4,12 +4,12 @@
   "title": "MTP Package v0.2",
   "description": "Methodology Transfer Protocol — a methodology control plane for portable AI methodologies. Version 0.2.",
   "type": "object",
-  "required": ["mtp_version", "package", "intent", "input", "methodology", "output"],
+  "required": ["mtp_version", "package", "intent", "input", "methodology", "output", "policy"],
   "properties": {
     "mtp_version": {
       "type": "string",
-      "enum": ["0.1", "0.2"],
-      "description": "MTP specification version"
+      "const": "0.2",
+      "description": "MTP specification version. v0.2 schema strictly requires '0.2'. Use schema/mtp-package-v0.1.json for v0.1 packages."
     },
     "package": {
       "type": "object",
@@ -129,7 +129,7 @@
         },
         "on_failure": {
           "type": "string",
-          "enum": ["halt", "skip_with_flag", "retry_once", "escalate"],
+          "enum": ["halt", "skip_with_flag", "retry", "escalate"],
           "default": "halt"
         },
         "on_deviation": {
@@ -170,7 +170,7 @@
     },
     "methodologyStep": {
       "type": "object",
-      "required": ["step", "name", "action"],
+      "required": ["step", "name", "action", "provenance", "execution_semantics"],
       "properties": {
         "step": { "type": "integer", "minimum": 1 },
         "name": { "type": "string" },
@@ -238,14 +238,18 @@
         },
         "last_checked": { "type": "string", "format": "date-time" },
         "checker": { "type": "string" },
+        "checker_version": { "type": "string", "description": "Version of the scanning tool" },
         "method": { "type": "string" },
         "patterns_checked": { "type": "array", "items": { "type": "string" } },
         "frameworks": { "type": "array", "items": { "type": "string" } },
-        "findings": { "type": "array", "items": { "type": "string" }, "default": [] }
+        "findings": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "report_hash": { "type": "string", "description": "SHA-256 hash of the scan report for integrity verification" },
+        "evidence_ref": { "type": "string", "description": "URI or path to the full scan report artifact" }
       }
     },
     "policyEnvelope": {
       "type": "object",
+      "required": ["data_classification", "redaction", "pii_scan", "secrets_scan", "client_identifier_scan", "regulated_content"],
       "properties": {
         "data_classification": {
           "type": "string",
@@ -254,6 +258,7 @@
         "redaction": { "$ref": "#/$defs/scanResult" },
         "pii_scan": { "$ref": "#/$defs/scanResult" },
         "secrets_scan": { "$ref": "#/$defs/scanResult" },
+        "client_identifier_scan": { "$ref": "#/$defs/scanResult" },
         "regulated_content": { "$ref": "#/$defs/scanResult" },
         "approval": {
           "type": "object",
