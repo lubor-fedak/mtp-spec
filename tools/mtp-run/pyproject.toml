@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mtp-run"
-version = "0.4.0"
+version = "0.4.1"
 description = "Reference runtime CLI for executing MTP (Methodology Transfer Protocol) packages"
 readme = "README.md"
 license = "Apache-2.0"

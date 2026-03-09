@@ -64,6 +64,7 @@ mtp-run adapters
 | Command | What it does |
 |---------|-------------|
 | `mtp-run exec` | Execute an MTP package against data through an LLM adapter |
+| `mtp-run score` | Compute weighted drift score for a single execution report (spec §8.3) |
 | `mtp-run adapters` | List available adapters and their configuration status |
 | `mtp-run drift` | Compare two execution reports — state agreement and divergence |
 

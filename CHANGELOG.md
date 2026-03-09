@@ -2,6 +2,25 @@
 
 All notable changes to the MTP specification are documented in this file.
 
+## [0.4.1] — 2026-03-09
+
+### Drift engine completion
+- `drift.py` now implements full weighted drift scoring per spec §8.3: 7 components, polarity normalization (inverted metrics use 1.0 - raw), missing data redistribution, composite weighted average
+- New `mtp-run score` command: compute drift score for a single execution report with per-component breakdown
+- CLI drift command now shows weighted drift scores alongside step-state agreement
+
+### Code cleanup
+- Removed dead code: old `adapters/` package (5 files), `executor.py`, `prompt_builder.py`, `report_builder.py`, `response_parser.py`
+- Active modules: `adapters.py` (mock + anthropic + openai), `drift.py`, `io_utils.py`, `reporting.py`, `cli.py`
+- All adapters (mock, anthropic, openai, azure-openai) fully implemented in single `adapters.py`
+
+### Verified
+- `mtp-run exec` with mock → all SUCCESS, drift 1.0, report schema-valid
+- `mtp-run score` on hand-written report → 0.92 (step 3 deviation correctly scored)
+- `mtp-run score` on mock report → 1.0 (edge_case_coverage excluded, weights redistributed)
+- `mtp-run drift` mock vs azure → 80% state agreement, drift scores 1.0 vs 0.96
+- `mtp-run adapters` → mock READY, anthropic/openai/azure AVAILABLE
+
 ## [0.4] — 2026-03-09
 
 ### First runtime deliverable: mtp-run

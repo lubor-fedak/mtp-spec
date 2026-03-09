@@ -134,6 +134,7 @@ cd tools/mtp-run && pip install -e ".[all]"    # all adapters (Claude, OpenAI, A
 | Command | What it does |
 |---------|-------------|
 | `mtp-run exec <package> --data <file>` | Execute a package against data via LLM adapter |
+| `mtp-run score <report>` | Compute weighted drift score for a single report (spec §8.3) |
 | `mtp-run adapters` | List available adapters and their configuration status |
 | `mtp-run drift <report1> <report2>` | Compare two execution reports — state agreement and divergence |
 

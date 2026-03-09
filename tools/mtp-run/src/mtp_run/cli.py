@@ -10,7 +10,7 @@ import click
 
 from mtp_run import __version__
 from mtp_run.adapters import get_adapter, list_adapters
-from mtp_run.drift import compare_reports
+from mtp_run.drift import compare_reports, compute_drift_score
 from mtp_run.io_utils import load_artifact, dump_yaml, validate_package, validate_execution_report
 from mtp_run.reporting import build_execution_report
 
@@ -129,6 +129,48 @@ def adapters():
         colors = {"ready": "green", "available": "yellow", "unavailable": "red", "planned": "white"}
         badge = click.style(info.status.upper(), fg=colors.get(info.status, "white"))
         click.echo(f"  {info.name:16s} {badge:28s} {info.notes}")
+
+
+@main.command()
+@click.argument("report_file", type=click.Path(exists=True))
+@click.option("--format", "fmt", type=click.Choice(["text", "json"]), default="text")
+def score(report_file: str, fmt: str):
+    """Compute weighted drift score for a single execution report (spec §8.3)."""
+    try:
+        data = load_artifact(report_file)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(2)
+
+    if "execution_report" not in data:
+        click.echo("Error: File must be an MTP execution report.", err=True)
+        sys.exit(2)
+
+    er = data["execution_report"]
+    steps = er.get("steps", [])
+    qc = er.get("quality_checks", [])
+    ec = er.get("edge_cases_encountered", [])
+    ns = er.get("novel_situations", [])
+
+    result = compute_drift_score(steps, qc, ec, ns)
+
+    if fmt == "json":
+        click.echo(json.dumps(result, indent=2))
+    else:
+        click.echo(f"Drift Score: {result['composite']}")
+        click.echo("")
+        click.echo(f"  {'Component':<25s} {'Score':>8s} {'Weight':>8s}")
+        click.echo(f"  {'-'*25} {'-'*8} {'-'*8}")
+        for key in ["step_fidelity", "deviation_rate", "validation_pass_rate",
+                     "output_quality", "edge_case_coverage", "novel_situation_rate",
+                     "dead_end_avoidance"]:
+            v = result["components"].get(key)
+            w = result["weights_used"].get(key)
+            vs = f"{v:.4f}" if v is not None else "n/a"
+            ws = f"{w:.4f}" if w is not None else "excl."
+            click.echo(f"  {key:<25s} {vs:>8s} {ws:>8s}")
+
+    sys.exit(0)
 
 
 @main.command()
