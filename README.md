@@ -123,13 +123,26 @@ mtp-registry sign your-package.yaml --profile ed25519 --key-file signer.pem --ke
 
 This adds detached trust artifacts on top of validated MTP packages and reports: signatures, approvals, and publishable registry entries.
 
+## Versioning
+
+MTP uses **two independent version tracks**:
+
+| Track | Current | What it covers |
+|-------|---------|----------------|
+| **Spec version** | v0.2.1 | Package format, execution semantics, provenance, redaction, drift — the normative protocol definition |
+| **Tooling version** | v0.7.0 | CLI tools built on top of the stable spec: `mtp-lint`, `mtp-run`, `mtp-conformance`, `mtp-registry`, `mtp-extract`, `mtp-benchmark` |
+
+The spec version (currently `0.2`) defines the wire format — `mtp_version: "0.2"` in every package and execution report. Tooling versions (`0.3`–`0.7`) add capabilities **on top of** the stable spec without changing the core format. Registry schemas use `v0.6`, benchmark schemas use `v0.7` — these are additive extensions, not replacements.
+
+The spec version will increment to `v0.3` only when the core package or execution report format changes.
+
 ## Specification
 
-📄 **[MTP Specification v0.2](spec/MTP-SPEC-v0.2.md)** — Full specification: lifecycle, package format, provenance, execution semantics, redaction discipline, drift measurement, conformance levels, and benchmark framework. Current patch: **0.2.1**.
+**[MTP Specification v0.2](spec/MTP-SPEC-v0.2.md)** — Full specification: lifecycle, package format, provenance, execution semantics, redaction discipline, drift measurement, conformance levels, and benchmark framework. Current patch: **0.2.1**.
 
-📄 **[MTP Registry Extension v0.6](spec/MTP-REGISTRY-v0.6.md)** — Registry layout, detached signature envelopes, approval records, registry entries, and local trust workflow.
+**[MTP Registry Extension v0.6](spec/MTP-REGISTRY-v0.6.md)** — Registry layout, detached signature envelopes, approval records, registry entries, and local trust workflow.
 
-📄 **[MTP Specification v0.1](spec/MTP-SPEC-v0.1.md)** — Original draft (superseded by v0.2).
+**[MTP Specification v0.1](spec/MTP-SPEC-v0.1.md)** — Original draft (superseded by v0.2).
 
 ## Schemas
 
