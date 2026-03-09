@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lubor-fedak/mtp-spec/schema/mtp-benchmark-suite-v0.7.json",
+  "title": "MTP Benchmark Suite v0.7",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["mtp_benchmark_version", "suite"],
+  "properties": {
+    "mtp_benchmark_version": {
+      "type": "string",
+      "const": "0.7"
+    },
+    "suite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "package_ref", "data_ref", "baseline_report_ref", "adapters"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "package_ref": { "type": "string", "minLength": 1 },
+        "data_ref": { "type": "string", "minLength": 1 },
+        "baseline_report_ref": { "type": "string", "minLength": 1 },
+        "adapters": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "thresholds"],
+            "properties": {
+              "name": { "type": "string", "enum": ["mock", "anthropic", "openai"] },
+              "model": { "type": "string" },
+              "azure": { "type": "boolean", "default": false },
+              "required": { "type": "boolean", "default": false },
+              "thresholds": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["min_comparison_drift", "min_state_agreement", "allowed_statuses"],
+                "properties": {
+                  "min_comparison_drift": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                  "min_state_agreement": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                  "allowed_statuses": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string",
+                      "enum": ["success", "partial", "deviation", "failure", "skipped", "escalated"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

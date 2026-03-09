@@ -46,6 +46,56 @@ jobs:
             --data examples/test-data-churn.csv \
             --adapter mock -q --format json > /dev/null
 
+  mtp-extract:
+    name: mtp-extract tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install tools
+        run: |
+          pip install -e tools/mtp-lint
+          pip install -e "tools/mtp-extract[dev]"
+      - name: Run tests
+        run: pytest tools/mtp-extract/tests/ -v --tb=short
+      - name: Extract reference draft
+        run: |
+          mtp-extract draft examples/conversations/churn-risk-scoring-session.md \
+            --name "Customer Churn Risk Scoring Draft" \
+            --author analytics-team \
+            --source-platform claude-sonnet-4 \
+            --precheck \
+            -o /tmp/churn-risk-scoring-draft.yaml
+          mtp-lint validate /tmp/churn-risk-scoring-draft.yaml
+
+  mtp-benchmark:
+    name: mtp-benchmark tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install tools
+        run: |
+          pip install -e tools/mtp-run
+          pip install -e "tools/mtp-benchmark[dev]"
+      - name: Run tests
+        run: pytest tools/mtp-benchmark/tests/ -v --tb=short
+      - name: Run reference benchmark
+        run: |
+          mtp-benchmark run examples/benchmarks/churn-risk-benchmark-suite-v0.7.yaml \
+            --output-dir /tmp/mtp-benchmark
+          mtp-benchmark validate /tmp/mtp-benchmark/churn-risk-benchmark-result-v0.7.yaml
+
   mtp-conformance:
     name: mtp-conformance tests
     runs-on: ubuntu-latest
@@ -126,9 +176,15 @@ jobs:
         run: |
           pip install -e tools/mtp-lint
           pip install -e tools/mtp-run
+          pip install -e tools/mtp-extract
+          pip install -e tools/mtp-benchmark
       - name: Validate all examples
         run: |
           mtp-lint validate examples/churn-risk-scoring-v0.2.yaml
           mtp-lint validate examples/valuation-report-extraction.yaml
           mtp-lint validate examples/churn-risk-scoring-execution-report-v0.2.yaml
           mtp-lint validate examples/churn-risk-scoring-mock-execution-report-v0.2.yaml
+          mtp-lint validate examples/conversations/churn-risk-scoring-draft-v0.7.yaml
+          mtp-benchmark validate examples/benchmarks/churn-risk-benchmark-suite-v0.7.yaml
+          mtp-benchmark validate examples/benchmarks/churn-risk-benchmark-result-v0.7.yaml
+          mtp-benchmark validate examples/benchmarks/mock-adapter-certification-v0.7.yaml

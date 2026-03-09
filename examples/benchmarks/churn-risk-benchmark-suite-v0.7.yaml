@@ -1,0 +1,30 @@
+mtp_benchmark_version: "0.7"
+suite:
+  id: "churn-risk-benchmark"
+  name: "Customer Churn Risk Adapter Benchmark"
+  description: "Reference benchmark for comparing adapter fidelity against the churn-risk package baseline."
+  package_ref: "../churn-risk-scoring-v0.2.yaml"
+  data_ref: "../test-data-churn.csv"
+  baseline_report_ref: "../churn-risk-scoring-mock-execution-report-v0.2.yaml"
+  adapters:
+    - name: "mock"
+      model: "deterministic"
+      required: true
+      thresholds:
+        min_comparison_drift: 1.0
+        min_state_agreement: 1.0
+        allowed_statuses: ["success"]
+    - name: "anthropic"
+      model: "claude-sonnet-4-20250514"
+      required: false
+      thresholds:
+        min_comparison_drift: 0.7
+        min_state_agreement: 0.8
+        allowed_statuses: ["success", "partial", "deviation"]
+    - name: "openai"
+      model: "gpt-4o"
+      required: false
+      thresholds:
+        min_comparison_drift: 0.7
+        min_state_agreement: 0.8
+        allowed_statuses: ["success", "partial", "deviation"]

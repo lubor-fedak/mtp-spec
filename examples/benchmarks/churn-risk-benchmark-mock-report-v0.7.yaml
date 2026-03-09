@@ -1,0 +1,79 @@
+execution_report:
+  mtp_package_id: b2c3d4e5-f6a7-8901-bcde-f12345678901
+  mtp_package_version: 1.0.0
+  mtp_spec_version: '0.2'
+  target_platform: mock-adapter-v0.4
+  executor: mtp-benchmark v0.7.0
+  timestamp: '2026-03-09T22:22:32.332414+00:00'
+  duration_seconds: 0.0
+  overall_status: success
+  overall_confidence: high
+  steps:
+  - step: 1
+    state: success
+    validation_result: pass
+    duration_seconds: 0.0
+    retries_attempted: 0
+    notes: 'Mock adapter: step executed successfully.'
+  - step: 2
+    state: success
+    validation_result: pass
+    duration_seconds: 0.0
+    retries_attempted: 0
+    notes: 'Mock adapter: step executed successfully.'
+  - step: 3
+    state: success
+    validation_result: pass
+    duration_seconds: 0.0
+    retries_attempted: 0
+    notes: 'Mock adapter: step executed successfully.'
+  - step: 4
+    state: success
+    validation_result: pass
+    duration_seconds: 0.0
+    retries_attempted: 0
+    notes: 'Mock adapter: step executed successfully.'
+  - step: 5
+    state: success
+    validation_result: pass
+    duration_seconds: 0.0
+    retries_attempted: 0
+    notes: 'Mock adapter: step executed successfully.'
+  edge_cases_encountered: []
+  novel_situations: []
+  dead_ends_prevented: []
+  quality_checks:
+  - check: All input accounts present in output (scored or excluded)
+    result: pass
+    is_blocking: true
+    notes: Mock adapter reference run marked this quality check as passed.
+  - check: All composite scores are 0-100 and equal sum of sub-scores
+    result: pass
+    is_blocking: true
+    notes: Mock adapter reference run marked this quality check as passed.
+  - check: Output is sorted by churn_risk descending
+    result: pass
+    is_blocking: false
+    notes: Mock adapter reference run marked this quality check as passed.
+  policy_compliance:
+    data_leaked: false
+    pii_detected: false
+    notes: ''
+  drift_score:
+    composite: 1.0
+    components:
+      step_fidelity: 1.0
+      deviation_rate: 1.0
+      validation_pass_rate: 1.0
+      output_quality: 1.0
+      edge_case_coverage: null
+      novel_situation_rate: 1.0
+      dead_end_avoidance: 1.0
+    weights_used:
+      step_fidelity: 0.2778
+      deviation_rate: 0.1667
+      validation_pass_rate: 0.2778
+      output_quality: 0.2222
+      novel_situation_rate: 0.0333
+      dead_end_avoidance: 0.0222
+  report_hash: sha256:ef50d1a3db801b9718ff0f4a3ddff498a3ff4cc3472a59e30c2597c97e38b198

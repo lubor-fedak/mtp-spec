@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from mtp_registry.cli import main
 from mtp_registry.artifacts import dump_yaml, load_artifact
@@ -68,6 +70,58 @@ class TestRegistryCli:
                 "MTP_REGISTRY_SIGNING_KEY",
             ],
             env=signing_env,
+        )
+        assert verify_result.exit_code == 0
+        assert "VERIFIED" in verify_result.output
+
+    def test_sign_and_verify_ed25519(self, runner: CliRunner, tmp_path: Path) -> None:
+        private_key = Ed25519PrivateKey.generate()
+        private_path = tmp_path / "ed25519-private.pem"
+        public_path = tmp_path / "ed25519-public.pem"
+        private_path.write_bytes(
+            private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        )
+        public_path.write_bytes(
+            private_key.public_key().public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
+            )
+        )
+
+        signature_path = tmp_path / "package.signature.yaml"
+        sign_result = runner.invoke(
+            main,
+            [
+                "sign",
+                str(PACKAGE_FILE),
+                "--profile",
+                "ed25519",
+                "--key-file",
+                str(private_path),
+                "--key-id",
+                "ed-key",
+                "--signer",
+                "release-bot",
+                "--output",
+                str(signature_path),
+            ],
+        )
+        assert sign_result.exit_code == 0
+
+        verify_result = runner.invoke(
+            main,
+            [
+                "verify",
+                str(PACKAGE_FILE),
+                "--signature",
+                str(signature_path),
+                "--key-file",
+                str(public_path),
+            ],
         )
         assert verify_result.exit_code == 0
         assert "VERIFIED" in verify_result.output

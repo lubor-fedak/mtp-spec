@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import base64
 import hmac
 import shutil
 import uuid
 from hashlib import sha256
 from pathlib import Path
 from typing import Any
+
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 
 from mtp_registry.artifacts import (
     artifact_identity,
@@ -65,6 +69,7 @@ def create_signature_envelope(
     key_id: str,
     signer_id: str,
     key_source: str,
+    profile: str = "hmac-sha256",
 ) -> dict[str, Any]:
     errors = validate_primary_artifact(artifact)
     if errors:
@@ -72,11 +77,7 @@ def create_signature_envelope(
 
     artifact_type = detect_artifact_type(artifact)
     identity = artifact_identity(artifact)
-    signature_value = hmac.new(
-        key.encode("utf-8"),
-        canonical_bytes(artifact),
-        sha256,
-    ).hexdigest()
+    signature_value = _sign(profile, key, canonical_bytes(artifact))
 
     envelope = {
         "mtp_registry_version": "0.6",
@@ -88,7 +89,7 @@ def create_signature_envelope(
             "artifact_hash": sha256_ref(artifact),
             "canonicalization": "json-sorted-v1",
             "signature_profile": {
-                "profile": "hmac-sha256",
+                "profile": profile,
                 "key_id": key_id,
                 "key_source": key_source,
             },
@@ -119,14 +120,10 @@ def verify_signature_envelope(
         raise ValueError(f"Artifact is not schema-valid: {artifact_errors}")
 
     signature = envelope["signature_envelope"]
+    profile = signature["signature_profile"]["profile"]
     expected_hash = sha256_ref(artifact)
     hash_matches = signature["artifact_hash"] == expected_hash
-    actual_signature = hmac.new(
-        key.encode("utf-8"),
-        canonical_bytes(artifact),
-        sha256,
-    ).hexdigest()
-    signature_matches = hmac.compare_digest(signature["signature"], actual_signature)
+    signature_matches = _verify_signature(profile, key, canonical_bytes(artifact), signature["signature"])
     artifact_type_matches = signature["artifact_type"] == detect_artifact_type(artifact)
     identity_matches = signature["artifact_identity"] == artifact_identity(artifact)
 
@@ -518,3 +515,47 @@ def _artifact_relative_path(artifact_type: str, identity: dict[str, str]) -> Pat
 
 def _trust_relative_path(kind: str, identity: dict[str, str], filename: str) -> Path:
     return Path(kind) / slugify(identity["id"]) / identity["version"] / filename
+
+
+def _sign(profile: str, key_material: str, payload: bytes) -> str:
+    if profile == "hmac-sha256":
+        return hmac.new(key_material.encode("utf-8"), payload, sha256).hexdigest()
+    if profile == "ed25519":
+        private_key = _load_ed25519_private_key(key_material)
+        return base64.b64encode(private_key.sign(payload)).decode("ascii")
+    raise ValueError(f"Unsupported signature profile '{profile}'.")
+
+
+def _verify_signature(profile: str, key_material: str, payload: bytes, signature: str) -> bool:
+    if profile == "hmac-sha256":
+        actual_signature = hmac.new(key_material.encode("utf-8"), payload, sha256).hexdigest()
+        return hmac.compare_digest(signature, actual_signature)
+    if profile == "ed25519":
+        public_key = _load_ed25519_public_key(key_material)
+        try:
+            public_key.verify(base64.b64decode(signature), payload)
+            return True
+        except Exception:
+            return False
+    raise ValueError(f"Unsupported signature profile '{profile}'.")
+
+
+def _load_ed25519_private_key(key_material: str) -> Ed25519PrivateKey:
+    loaded = serialization.load_pem_private_key(_normalize_key_material(key_material).encode("utf-8"), password=None)
+    if not isinstance(loaded, Ed25519PrivateKey):
+        raise ValueError("Signing key is not an Ed25519 private key.")
+    return loaded
+
+
+def _load_ed25519_public_key(key_material: str) -> Ed25519PublicKey:
+    normalized = _normalize_key_material(key_material)
+    if "BEGIN PRIVATE KEY" in normalized:
+        return _load_ed25519_private_key(normalized).public_key()
+    loaded = serialization.load_pem_public_key(normalized.encode("utf-8"))
+    if not isinstance(loaded, Ed25519PublicKey):
+        raise ValueError("Verification key is not an Ed25519 public key.")
+    return loaded
+
+
+def _normalize_key_material(key_material: str) -> str:
+    return key_material.replace("\\n", "\n").strip()

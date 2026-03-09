@@ -56,7 +56,17 @@ An MTP Package captures **the recipe without the ingredients** — intent, decis
 
 ### 1. Extract a methodology
 
-Develop your methodology in any AI system, then extract an MTP Package using the [extraction prompt template](spec/MTP-SPEC-v0.2.md#102-extraction-prompt-template).
+```bash
+cd tools/mtp-extract && pip install -e .
+mtp-extract draft examples/conversations/churn-risk-scoring-session.md \
+  --name "Customer Churn Risk Scoring Draft" \
+  --author analytics-team \
+  --source-platform claude-sonnet-4 \
+  --precheck \
+  -o your-package.yaml
+```
+
+This turns a transcript or conversation export into a schema-valid draft MTP package with provenance and a populated policy envelope.
 
 ### 2. Validate with mtp-lint
 
@@ -94,12 +104,21 @@ mtp-conformance run --level l3
 
 This runs the fixture-driven L1/L2/L3 conformance corpus across schema validation, execution semantics, redaction detection, provenance presence, and drift reference cases.
 
-### 6. Publish into a registry
+### 6. Run a benchmark suite
+
+```bash
+cd tools/mtp-benchmark && pip install -e .
+mtp-benchmark run examples/benchmarks/churn-risk-benchmark-suite-v0.7.yaml --output-dir /tmp/mtp-benchmark
+```
+
+This compares adapter outputs against a baseline report and emits a benchmark result plus adapter certification inputs.
+
+### 7. Publish into a registry
 
 ```bash
 cd tools/mtp-registry && pip install -e .
 mtp-registry init registry/ --name "Internal MTP Registry"
-mtp-registry sign your-package.yaml --key-env MTP_REGISTRY_SIGNING_KEY --key-id dev-key --signer release-bot
+mtp-registry sign your-package.yaml --profile ed25519 --key-file signer.pem --key-id dev-key --signer release-bot
 ```
 
 This adds detached trust artifacts on top of validated MTP packages and reports: signatures, approvals, and publishable registry entries.
@@ -124,6 +143,9 @@ MTP provides JSON Schemas (Draft 2020-12) for machine validation of all artifact
 | [mtp-signature-envelope-v0.6.json](schema/mtp-signature-envelope-v0.6.json) | Signature envelopes | Detached trust metadata for packages and execution reports |
 | [mtp-approval-record-v0.6.json](schema/mtp-approval-record-v0.6.json) | Approval records | Governance decisions tied to artifact hashes |
 | [mtp-registry-entry-v0.6.json](schema/mtp-registry-entry-v0.6.json) | Registry entries | Published registry assets with trust refs and lifecycle state |
+| [mtp-benchmark-suite-v0.7.json](schema/mtp-benchmark-suite-v0.7.json) | Benchmark suites | Adapter benchmark inputs: package, baseline, thresholds |
+| [mtp-benchmark-result-v0.7.json](schema/mtp-benchmark-result-v0.7.json) | Benchmark results | Drift and availability results across adapters |
+| [mtp-adapter-certification-v0.7.json](schema/mtp-adapter-certification-v0.7.json) | Adapter certifications | Benchmark-derived certification status for an adapter |
 | [mtp-package-v0.1.json](schema/mtp-package-v0.1.json) | Legacy v0.1 packages | Permissive: backward compatibility |
 
 v0.1 packages are correctly rejected by the v0.2 schema. Use the v0.1 schema for legacy packages.
@@ -194,11 +216,40 @@ cd tools/mtp-registry && pip install -e .
 | Command | What it does |
 |---------|-------------|
 | `mtp-registry init <dir>` | Initialize a local MTP registry layout |
-| `mtp-registry sign <artifact>` | Generate a detached signature envelope using the reference `hmac-sha256` profile |
+| `mtp-registry sign <artifact>` | Generate a detached signature envelope using `hmac-sha256` or `ed25519` |
 | `mtp-registry verify <artifact>` | Verify artifact hash, identity, and signature envelope |
 | `mtp-registry approve <artifact>` | Create a detached approval record tied to the artifact hash |
 | `mtp-registry publish <artifact>` | Copy artifact and trust sidecars into a registry and generate a registry entry |
 | `mtp-registry check-entry <entry>` | Verify a published registry entry plus all referenced trust artifacts |
+
+### mtp-extract (v0.7)
+
+Conversation-to-package extraction tool. See [tools/mtp-extract/README.md](tools/mtp-extract/README.md) for full usage.
+
+```bash
+cd tools/mtp-extract && pip install -e .
+```
+
+| Command | What it does |
+|---------|-------------|
+| `mtp-extract draft <conversation>` | Convert a conversation transcript/export into a schema-valid draft MTP package |
+| `mtp-extract precheck <package>` | Populate the package policy envelope using the redaction scanner |
+| `mtp-extract map <package>` | Emit a provenance map for steps, edge cases, and dead ends |
+| `mtp-extract merge <base> <overlay>` | Merge two MTP packages into one updated draft |
+
+### mtp-benchmark (v0.7)
+
+Benchmark runner and adapter certification tooling. See [tools/mtp-benchmark/README.md](tools/mtp-benchmark/README.md) for full usage.
+
+```bash
+cd tools/mtp-benchmark && pip install -e .
+```
+
+| Command | What it does |
+|---------|-------------|
+| `mtp-benchmark validate <artifact>` | Validate a benchmark suite, result, or certification artifact |
+| `mtp-benchmark run <suite>` | Execute a benchmark suite and compare adapter results against a baseline report |
+| `mtp-benchmark certify <result> --adapter <name>` | Generate an adapter certification artifact from benchmark output |
 
 ## Examples
 
@@ -207,6 +258,11 @@ cd tools/mtp-registry && pip install -e .
 | [churn-risk-scoring-v0.2.yaml](examples/churn-risk-scoring-v0.2.yaml) | Package (v0.2) | Golden v0.2 package — customer churn scoring with full provenance, execution semantics, and policy envelope |
 | [churn-risk-scoring-mock-execution-report-v0.2.yaml](examples/churn-risk-scoring-mock-execution-report-v0.2.yaml) | Exec Report (v0.2) | Deterministic mock runtime report from `mtp-run exec` — 5 steps success, drift 1.0 |
 | [churn-risk-scoring-execution-report-v0.2.yaml](examples/churn-risk-scoring-execution-report-v0.2.yaml) | Exec Report (v0.2) | Example real-platform-style execution report with deviation handling and corrected weighted drift score |
+| [churn-risk-scoring-session.md](examples/conversations/churn-risk-scoring-session.md) | Conversation Transcript | Reference transcript for `mtp-extract` |
+| [churn-risk-scoring-draft-v0.7.yaml](examples/conversations/churn-risk-scoring-draft-v0.7.yaml) | Extracted Draft | Heuristically extracted draft package with provenance and prechecked policy envelope |
+| [churn-risk-benchmark-suite-v0.7.yaml](examples/benchmarks/churn-risk-benchmark-suite-v0.7.yaml) | Benchmark Suite | Adapter benchmark definition against the churn-risk baseline |
+| [churn-risk-benchmark-result-v0.7.yaml](examples/benchmarks/churn-risk-benchmark-result-v0.7.yaml) | Benchmark Result | Benchmark output: mock executed, real adapters skipped when unavailable |
+| [mock-adapter-certification-v0.7.yaml](examples/benchmarks/mock-adapter-certification-v0.7.yaml) | Adapter Certification | Certification artifact derived from the benchmark result for the mock adapter |
 | [registry.yaml](examples/registry/registry.yaml) | Registry Manifest (v0.6) | Reference local registry initialized by `mtp-registry` |
 | [customer-churn-risk-scoring-1.0.0.registry-entry.yaml](examples/registry/entries/customer-churn-risk-scoring-1.0.0.registry-entry.yaml) | Registry Entry (v0.6) | Published registry entry for the churn scoring package with signature and approval refs |
 | [test-data-churn.csv](examples/test-data-churn.csv) | Test Data | Sample data for running the churn scoring package |
@@ -214,8 +270,10 @@ cd tools/mtp-registry && pip install -e .
 
 Try it yourself:
 ```bash
+mtp-extract draft examples/conversations/churn-risk-scoring-session.md --precheck -o /tmp/churn-draft.yaml
 mtp-lint check examples/churn-risk-scoring-v0.2.yaml
 mtp-run exec examples/churn-risk-scoring-v0.2.yaml --data examples/test-data-churn.csv --adapter mock
+mtp-benchmark validate examples/benchmarks/churn-risk-benchmark-result-v0.7.yaml
 MTP_REGISTRY_SIGNING_KEY=mtp-example-registry-key-v0.6 mtp-registry check-entry examples/registry/entries/customer-churn-risk-scoring-1.0.0.registry-entry.yaml --registry-dir examples/registry --key-env MTP_REGISTRY_SIGNING_KEY
 ```
 
@@ -228,8 +286,9 @@ MTP_REGISTRY_SIGNING_KEY=mtp-example-registry-key-v0.6 mtp-registry check-entry 
 | v0.3.x | ✅ Released | `mtp-lint` CLI: schema validator, redaction scanner (6 categories), completeness scorer, policy gate. Patch: 0.3.2 |
 | v0.4 | ✅ Released | `mtp-run` reference runtime CLI: execution engine, adapters (mock, Anthropic, OpenAI, Azure), drift comparison |
 | v0.5 | ✅ Released | `mtp-conformance` fixture runner, L1/L2/L3 fixture packs, release-gate summaries, CI conformance reporting |
-| v0.6 | ✅ Current | `mtp-registry` CLI, registry schemas, detached signature envelopes, approval records, local registry publication workflow |
-| v1.0 | Target | Production adapters, community benchmarks, enterprise reference architecture |
+| v0.6 | ✅ Released | `mtp-registry` CLI, registry schemas, detached signature envelopes, approval records, local registry publication workflow |
+| v0.7 | ✅ Current | `mtp-extract`, `mtp-benchmark`, adapter certification artifacts, extracted draft examples, Ed25519 registry signing profile |
+| v1.0 | Target | KMS-backed trust, enterprise reference architecture, provider-certified benchmark matrix, stable compatibility contract |
 
 ## Contributing
 

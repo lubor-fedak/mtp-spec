@@ -42,16 +42,17 @@ Validate → Sign → Approve → Publish → Verify
 For `approved` registry entries, the reference workflow requires a successful
 cryptographic signature verification at publish time.
 
-### 2.2 Reference Signature Profile
+### 2.2 Reference Signature Profiles
 
-The reference `v0.6` profile is:
+The reference `v0.6` implementation now supports two profiles:
 
-- `profile`: `hmac-sha256`
+- `profile`: `hmac-sha256` — pragmatic bootstrap for local and CI workflows
+- `profile`: `ed25519` — detached asymmetric signing for stronger distribution and verification workflows
 - `canonicalization`: `json-sorted-v1`
 
-This is a pragmatic bootstrap profile for local and CI workflows. It is not the
-final trust model for large enterprises. Future profiles can add asymmetric
-signatures or KMS-backed signing without changing registry entry semantics.
+These profiles are still reference-grade, not the final trust model for large
+enterprises. Future profiles can add KMS-backed signing without changing
+registry entry semantics.
 
 ### 2.3 Approval Semantics
 
@@ -148,8 +149,10 @@ The reference implementation lives in `tools/mtp-registry/` and provides:
 
 ```bash
 mtp-registry init registry/ --name "Internal MTP Registry"
-mtp-registry sign package.yaml --key-env MTP_REGISTRY_SIGNING_KEY --key-id dev-key --signer release-bot
+mtp-registry sign package.yaml --profile hmac-sha256 --key-env MTP_REGISTRY_SIGNING_KEY --key-id dev-key --signer release-bot
 mtp-registry verify package.yaml --signature package.signature.v0.6.yaml --key-env MTP_REGISTRY_SIGNING_KEY
+mtp-registry sign package.yaml --profile ed25519 --key-file signer.pem --key-id dev-key --signer release-bot
+mtp-registry verify package.yaml --signature package.signature.v0.6.yaml --key-file signer.pub.pem
 mtp-registry approve package.yaml --signature package.signature.v0.6.yaml --approver-id risk-committee --approver-name "Risk Committee" --role governance --status approved --policy enterprise-v1 --rationale "Approved for internal use."
 mtp-registry publish package.yaml --registry-dir registry/ --signature package.signature.v0.6.yaml --key-env MTP_REGISTRY_SIGNING_KEY --approval package.approval.v0.6.yaml --status approved --channel internal
 mtp-registry check-entry registry/entries/example.registry-entry.yaml --registry-dir registry/ --key-env MTP_REGISTRY_SIGNING_KEY
@@ -176,7 +179,7 @@ or `mtp-execution-report-v0.2.json`.
 The reference `v0.6` implementation is intentionally conservative:
 
 - local filesystem registry only
-- HMAC reference profile only
+- HMAC and Ed25519 reference profiles only
 - detached approvals only
 - no multi-party quorum logic
 - no external KMS or certificate chain

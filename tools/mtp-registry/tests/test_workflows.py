@@ -5,6 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from mtp_registry.artifacts import load_artifact, sha256_ref
 from mtp_registry.workflows import (
@@ -71,6 +73,25 @@ class TestCreateSignatureEnvelope:
         assert body["signature_profile"]["profile"] == "hmac-sha256"
         assert len(body["signature"]) == 64
 
+    def test_creates_valid_ed25519_envelope(self, package: dict) -> None:
+        private_key = Ed25519PrivateKey.generate()
+        private_pem = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        ).decode("utf-8")
+        envelope = create_signature_envelope(
+            artifact=package,
+            artifact_ref=str(PACKAGE_FILE),
+            key=private_pem,
+            key_id="ed-key",
+            signer_id="test-bot",
+            key_source="file:test.pem",
+            profile="ed25519",
+        )
+        assert envelope["signature_envelope"]["signature_profile"]["profile"] == "ed25519"
+        assert len(envelope["signature_envelope"]["signature"]) > 64
+
     def test_invalid_artifact_raises(self) -> None:
         with pytest.raises(ValueError, match="Cannot sign invalid"):
             create_signature_envelope(
@@ -99,6 +120,29 @@ class TestVerifySignatureEnvelope:
         tampered = {**package, "mtp_version": "0.1"}
         result = verify_signature_envelope(tampered, envelope, KEY)
         assert result["verified"] is False
+
+    def test_ed25519_verification(self, package: dict) -> None:
+        private_key = Ed25519PrivateKey.generate()
+        private_pem = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        ).decode("utf-8")
+        public_pem = private_key.public_key().public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        ).decode("utf-8")
+        envelope = create_signature_envelope(
+            artifact=package,
+            artifact_ref=str(PACKAGE_FILE),
+            key=private_pem,
+            key_id="ed-key",
+            signer_id="test-bot",
+            key_source="file:test.pem",
+            profile="ed25519",
+        )
+        result = verify_signature_envelope(package, envelope, public_pem)
+        assert result["verified"] is True
 
 
 class TestCreateApprovalRecord:

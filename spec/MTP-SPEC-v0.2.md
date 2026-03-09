@@ -826,10 +826,11 @@ A valid benchmark must:
 | v0.3 | ✅ Tooling | `mtp-lint` CLI: schema validator, redaction scanner (PII, secrets, entropy, client IDs, regulated content, literal data), completeness scorer, enterprise policy gate |
 | v0.4 | ✅ Runtime | `mtp-run` reference runtime CLI: step-by-step execution engine, LLM adapters (mock, Anthropic, OpenAI, Azure OpenAI), execution report generation with drift scoring, cross-report drift comparison |
 | v0.5 | ✅ Released | Formal conformance suite, fixture packs, release-gate runner, CI conformance reporting |
-| v0.6 | ✅ Current | Registry specification, package signatures, approval workflows |
-| v1.0 | Target | Production-ready adapters for major platforms, community-validated benchmarks, enterprise reference architecture |
+| v0.6 | ✅ Released | Registry specification, package signatures, approval workflows |
+| v0.7 | ✅ Current | Extraction tooling, benchmark suites/results, adapter certification artifacts, stronger signing profiles |
+| v1.0 | Target | KMS-backed trust, enterprise reference architecture, provider-certified benchmark matrix, stable compatibility contract |
 
-The `v0.6` trust layer is specified separately in [MTP-REGISTRY-v0.6.md](MTP-REGISTRY-v0.6.md) so that registry artifacts evolve independently from the stable `v0.2` package and execution-report schemas.
+The `v0.6` trust layer is specified separately in [MTP-REGISTRY-v0.6.md](MTP-REGISTRY-v0.6.md) so that registry artifacts evolve independently from the stable `v0.2` package and execution-report schemas. `v0.7` builds on that with extraction and benchmark tooling rather than changing the core package/report contract.
 
 ---
 

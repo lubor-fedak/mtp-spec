@@ -40,15 +40,26 @@ def init(registry_dir: Path, name: str):
 
 @main.command()
 @click.argument("artifact_file", type=click.Path(exists=True, path_type=Path))
-@click.option("--key-env", required=True, help="Environment variable containing the signing key")
+@click.option("--profile", type=click.Choice(["hmac-sha256", "ed25519"]), default="hmac-sha256", show_default=True)
+@click.option("--key-env", default=None, help="Environment variable containing the signing key")
+@click.option("--key-file", type=click.Path(exists=True, path_type=Path), default=None, help="File containing the signing key")
 @click.option("--key-id", required=True, help="Logical key identifier stored in the signature envelope")
 @click.option("--signer", "signer_id", required=True, help="Signer identifier")
 @click.option("--output", "-o", type=click.Path(path_type=Path), default=None, help="Output envelope file")
-def sign(artifact_file: Path, key_env: str, key_id: str, signer_id: str, output: Path | None):
+def sign(
+    artifact_file: Path,
+    profile: str,
+    key_env: str | None,
+    key_file: Path | None,
+    key_id: str,
+    signer_id: str,
+    output: Path | None,
+):
     """Create a detached signature envelope for a package or execution report."""
-    key = os.environ.get(key_env)
-    if not key:
-        click.echo(f"Error: environment variable '{key_env}' is not set.", err=True)
+    try:
+        key, key_source = _load_key_material(key_env, key_file)
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
         sys.exit(2)
 
     artifact = load_artifact(artifact_file)
@@ -59,7 +70,8 @@ def sign(artifact_file: Path, key_env: str, key_id: str, signer_id: str, output:
             key=key,
             key_id=key_id,
             signer_id=signer_id,
-            key_source=f"env:{key_env}",
+            key_source=key_source,
+            profile=profile,
         )
     except Exception as exc:
         click.echo(f"Error: {exc}", err=True)
@@ -73,13 +85,15 @@ def sign(artifact_file: Path, key_env: str, key_id: str, signer_id: str, output:
 @main.command()
 @click.argument("artifact_file", type=click.Path(exists=True, path_type=Path))
 @click.option("--signature", "signature_file", required=True, type=click.Path(exists=True, path_type=Path))
-@click.option("--key-env", required=True, help="Environment variable containing the signing key")
+@click.option("--key-env", default=None, help="Environment variable containing the verification key or shared secret")
+@click.option("--key-file", type=click.Path(exists=True, path_type=Path), default=None, help="File containing the verification key or shared secret")
 @click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text")
-def verify(artifact_file: Path, signature_file: Path, key_env: str, output_format: str):
+def verify(artifact_file: Path, signature_file: Path, key_env: str | None, key_file: Path | None, output_format: str):
     """Verify a detached signature envelope against an artifact."""
-    key = os.environ.get(key_env)
-    if not key:
-        click.echo(f"Error: environment variable '{key_env}' is not set.", err=True)
+    try:
+        key, _key_source = _load_key_material(key_env, key_file)
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
         sys.exit(2)
 
     artifact = load_artifact(artifact_file)
@@ -159,6 +173,7 @@ def approve(
 @click.option("--registry-dir", required=True, type=click.Path(exists=True, file_okay=False, path_type=Path))
 @click.option("--signature", "signature_file", required=True, type=click.Path(exists=True, path_type=Path))
 @click.option("--key-env", default=None, help="Optional environment variable for cryptographic verification during publish")
+@click.option("--key-file", type=click.Path(exists=True, path_type=Path), default=None, help="Optional file containing verification key material")
 @click.option("--approval", "approval_files", multiple=True, type=click.Path(exists=True, path_type=Path))
 @click.option("--status", type=click.Choice(["draft", "review", "approved", "deprecated"]), required=True)
 @click.option("--channel", default="internal", show_default=True)
@@ -172,6 +187,7 @@ def publish(
     registry_dir: Path,
     signature_file: Path,
     key_env: str | None,
+    key_file: Path | None,
     approval_files: tuple[Path, ...],
     status: str,
     channel: str,
@@ -185,9 +201,10 @@ def publish(
     artifact = load_artifact(artifact_file)
     signature = load_artifact(signature_file)
     approvals = [load_artifact(path) for path in approval_files]
-    signing_key = os.environ.get(key_env) if key_env else None
-    if key_env and signing_key is None:
-        click.echo(f"Error: environment variable '{key_env}' is not set.", err=True)
+    try:
+        signing_key, _key_source = _load_key_material(key_env, key_file, optional=True)
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
         sys.exit(2)
 
     try:
@@ -245,10 +262,15 @@ def list_cmd(registry_dir: Path, status: str | None, channel: str | None, output
 @click.argument("entry_file", type=click.Path(exists=True, path_type=Path))
 @click.option("--registry-dir", required=True, type=click.Path(exists=True, file_okay=False, path_type=Path))
 @click.option("--key-env", default=None, help="Optional environment variable for cryptographic signature verification")
+@click.option("--key-file", type=click.Path(exists=True, path_type=Path), default=None, help="Optional file containing verification key material")
 @click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text")
-def check_entry(entry_file: Path, registry_dir: Path, key_env: str | None, output_format: str):
+def check_entry(entry_file: Path, registry_dir: Path, key_env: str | None, key_file: Path | None, output_format: str):
     """Validate a registry entry and all referenced trust artifacts."""
-    key = os.environ.get(key_env) if key_env else None
+    try:
+        key, _key_source = _load_key_material(key_env, key_file, optional=True)
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(2)
 
     try:
         result = verify_registry_entry(
@@ -270,6 +292,25 @@ def check_entry(entry_file: Path, registry_dir: Path, key_env: str | None, outpu
         click.echo(f"approvals_checked: {len(result['approval_results'])}")
 
     sys.exit(0 if result["verified"] else 1)
+
+
+def _load_key_material(
+    key_env: str | None,
+    key_file: Path | None,
+    optional: bool = False,
+) -> tuple[str | None, str | None]:
+    if key_env and key_file:
+        raise ValueError("Use either --key-env or --key-file, not both.")
+    if key_env:
+        value = os.environ.get(key_env)
+        if value is None:
+            raise ValueError(f"Environment variable '{key_env}' is not set.")
+        return value, f"env:{key_env}"
+    if key_file:
+        return key_file.read_text(encoding="utf-8"), f"file:{key_file}"
+    if optional:
+        return None, None
+    raise ValueError("One of --key-env or --key-file is required.")
 
 
 if __name__ == "__main__":

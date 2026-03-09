@@ -1,0 +1,290 @@
+mtp_version: '0.2'
+package:
+  id: 9393ec03-e2d1-4d20-abfa-0e6e107c5069
+  name: Customer Churn Risk Scoring Draft
+  version: 0.1.0
+  created: '2026-03-09T22:12:34Z'
+  updated: '2026-03-09T22:12:34Z'
+  author: analytics-team
+  source_platform: claude-sonnet-4
+  tags:
+  - account
+  - model
+  - sentiment
+  - instead
+  - opaque
+  - activity
+intent:
+  goal: We need a churn-risk methodology we can design in a capable model and later
+    execute inside an enterprise environment with the real account data.
+  context: We need a churn-risk methodology we can design in a capable model and later
+    execute inside an enterprise environment with the real account data. Start with
+    a transparent multi-signal approach instead of an opaque model. Collect the account
+    activity, support sentiment, feature adoption breadth, and renewal timing. Validat...
+    I want the output to stay explainable for the customer success team. They need
+    a ranked list and the reason why a score is high.
+  success_criteria:
+  - Any edge cases we should remember?
+  - What should we avoid?
+  - The extracted methodology remains schema-valid and reviewable before execution.
+  non_goals:
+  - This draft does not encode raw source data or platform-specific prompt history.
+  - This draft is not a substitute for human review before enterprise execution.
+input:
+  description: We need a churn-risk methodology we can design in a capable model and
+    later execute inside an enterprise environment with the real account data.
+  assumptions:
+  - Input material is accessible to the target system in a structured form.
+  - The target system can preserve step ordering, provenance, and explicit deviations.
+  preprocessing:
+  - step: 1
+    action: Normalize the incoming material into a structured working set before executing
+      methodology steps.
+    rationale: Extraction drafts cannot assume clean source material. The target runtime
+      should make structure explicit before applying the methodology.
+methodology:
+  approach: Start with a transparent multi-signal approach instead of an opaque model.
+    Collect the account activity, support sentiment, feature adoption breadth, and
+    ren... 1. Compare recent login activity against the prior period and score large
+    declines more aggressively than small ones. 2. Review support-ticket sentiment
+    and... If an account is younger than the full scoring window, normalize only over
+    the.
+  steps:
+  - step: 1
+    name: Collect The Account Activity Support Sentiment
+    action: Collect the account activity, support sentiment, feature adoption breadth,
+      and renewal timing.
+    rationale: Draft step extracted heuristically from the source conversation. Human
+      review should tighten thresholds, edge cases, and validations before production
+      use.
+    provenance:
+      source_type: conversation
+      source_ref: churn-risk-scoring-session.md:msg-2
+      confidence: medium
+      notes: Heuristically extracted from conversation content by mtp-extract.
+    execution_semantics:
+      on_success: proceed
+      on_failure: halt
+      on_deviation: flag_and_proceed
+    validation: Confirm the step completed with structured output and without silent
+      omission of relevant records or analytical units.
+  - step: 2
+    name: Validate The Inputs Before Scoring So
+    action: Validate the inputs before scoring so incomplete accounts are flagged
+      rather than silently omitted.
+    rationale: Draft step extracted heuristically from the source conversation. Human
+      review should tighten thresholds, edge cases, and validations before production
+      use.
+    provenance:
+      source_type: conversation
+      source_ref: churn-risk-scoring-session.md:msg-2
+      confidence: medium
+      notes: Heuristically extracted from conversation content by mtp-extract.
+    execution_semantics:
+      on_success: proceed
+      on_failure: halt
+      on_deviation: flag_and_proceed
+    validation: Confirm the step completed with structured output and without silent
+      omission of relevant records or analytical units.
+    depends_on:
+    - 1
+  - step: 3
+    name: I Want The Output To Stay
+    action: I want the output to stay explainable for the customer success team.
+    rationale: Draft step extracted heuristically from the source conversation. Human
+      review should tighten thresholds, edge cases, and validations before production
+      use.
+    provenance:
+      source_type: conversation
+      source_ref: churn-risk-scoring-session.md:msg-3
+      confidence: medium
+      notes: Heuristically extracted from conversation content by mtp-extract.
+    execution_semantics:
+      on_success: proceed
+      on_failure: halt
+      on_deviation: flag_and_proceed
+    validation: Confirm the step completed with structured output and without silent
+      omission of relevant records or analytical units.
+    depends_on:
+    - 2
+  - step: 4
+    name: They Need A Ranked List And
+    action: They need a ranked list and the reason why a score is high.
+    rationale: Draft step extracted heuristically from the source conversation. Human
+      review should tighten thresholds, edge cases, and validations before production
+      use.
+    provenance:
+      source_type: conversation
+      source_ref: churn-risk-scoring-session.md:msg-3
+      confidence: medium
+      notes: Heuristically extracted from conversation content by mtp-extract.
+    execution_semantics:
+      on_success: proceed
+      on_failure: halt
+      on_deviation: flag_and_proceed
+    validation: Confirm the step completed with structured output and without silent
+      omission of relevant records or analytical units.
+    depends_on:
+    - 3
+  - step: 5
+    name: Compare Recent Login Activity Against The
+    action: Compare recent login activity against the prior period and score large
+      declines more aggressively than small ones.
+    rationale: Draft step extracted heuristically from the source conversation. Human
+      review should tighten thresholds, edge cases, and validations before production
+      use.
+    provenance:
+      source_type: conversation
+      source_ref: churn-risk-scoring-session.md:msg-4
+      confidence: medium
+      notes: Heuristically extracted from conversation content by mtp-extract.
+    execution_semantics:
+      on_success: proceed
+      on_failure: halt
+      on_deviation: flag_and_proceed
+    validation: Confirm the step completed with structured output and without silent
+      omission of relevant records or analytical units.
+    depends_on:
+    - 4
+edge_cases:
+- scenario: Review support-ticket sentiment and treat sustained negative sentiment
+    as a risk amplifier.
+  handling: Flag the condition explicitly, preserve provenance, and route the case
+    through the documented methodology rather than improvising.
+  rationale: This condition appeared in the source conversation as something that
+    could distort results if handled implicitly.
+  severity: warning
+  provenance:
+    source_type: conversation
+    source_ref: churn-risk-scoring-session.md:msg-4
+    confidence: medium
+    notes: Detected as an edge-case cue in the conversation.
+- scenario: Any edge cases we should remember?
+  handling: Flag the condition explicitly, preserve provenance, and route the case
+    through the documented methodology rather than improvising.
+  rationale: This condition appeared in the source conversation as something that
+    could distort results if handled implicitly.
+  severity: warning
+  provenance:
+    source_type: conversation
+    source_ref: churn-risk-scoring-session.md:msg-5
+    confidence: medium
+    notes: Detected as an edge-case cue in the conversation.
+- scenario: If an account is younger than the full scoring window, normalize only
+    over the available history and flag it as short-history.
+  handling: Flag the condition explicitly, preserve provenance, and route the case
+    through the documented methodology rather than improvising.
+  rationale: This condition appeared in the source conversation as something that
+    could distort results if handled implicitly.
+  severity: warning
+  provenance:
+    source_type: conversation
+    source_ref: churn-risk-scoring-session.md:msg-6
+    confidence: medium
+    notes: Detected as an edge-case cue in the conversation.
+- scenario: If an account has no paid contract, exclude it from the prioritized output
+    and explain why.
+  handling: Flag the condition explicitly, preserve provenance, and route the case
+    through the documented methodology rather than improvising.
+  rationale: This condition appeared in the source conversation as something that
+    could distort results if handled implicitly.
+  severity: warning
+  provenance:
+    source_type: conversation
+    source_ref: churn-risk-scoring-session.md:msg-6
+    confidence: medium
+    notes: Detected as an edge-case cue in the conversation.
+constraints:
+- type: accuracy
+  description: The target system must preserve the extracted step order and validation
+    intent.
+  enforcement: Flag deviations explicitly and halt if a required step cannot be executed
+    reliably.
+- type: security
+  description: The package remains data-free and must not embed sensitive source material
+    from the conversation.
+  enforcement: Run policy precheck before enterprise execution and reject packages
+    that contain leaks.
+output:
+  description: I want the output to stay explainable for the customer success team.
+  quality_checks:
+  - check: No input records or required analytical units are silently omitted.
+    failure_action: halt
+    is_blocking: true
+  - check: Output includes enough structure to explain why the methodology reached
+      its result.
+    failure_action: flag_and_review
+    is_blocking: false
+dead_ends:
+- approach: Start with a transparent multi-signal approach instead of an opaque model.
+  reason: The source conversation indicates this path was considered unsafe, ineffective,
+    or misleading for the methodology.
+  lesson: Do not rediscover this path during execution. Escalate or revisit the package
+    authoring flow instead.
+  provenance:
+    source_type: conversation
+    source_ref: churn-risk-scoring-session.md:msg-2
+    confidence: medium
+    notes: Detected as a rejected or discouraged approach in the conversation.
+- approach: Add renewal proximity as an urgency multiplier instead of using it as
+    a standalone churn predictor.
+  reason: The source conversation indicates this path was considered unsafe, ineffective,
+    or misleading for the methodology.
+  lesson: Do not rediscover this path during execution. Escalate or revisit the package
+    authoring flow instead.
+  provenance:
+    source_type: conversation
+    source_ref: churn-risk-scoring-session.md:msg-4
+    confidence: medium
+    notes: Detected as a rejected or discouraged approach in the conversation.
+- approach: What should we avoid?
+  reason: The source conversation indicates this path was considered unsafe, ineffective,
+    or misleading for the methodology.
+  lesson: Do not rediscover this path during execution. Escalate or revisit the package
+    authoring flow instead.
+  provenance:
+    source_type: conversation
+    source_ref: churn-risk-scoring-session.md:msg-7
+    confidence: medium
+    notes: Detected as a rejected or discouraged approach in the conversation.
+- approach: Do not switch to an opaque ML classifier here.
+  reason: The source conversation indicates this path was considered unsafe, ineffective,
+    or misleading for the methodology.
+  lesson: Do not rediscover this path during execution. Escalate or revisit the package
+    authoring flow instead.
+  provenance:
+    source_type: conversation
+    source_ref: churn-risk-scoring-session.md:msg-8
+    confidence: medium
+    notes: Detected as a rejected or discouraged approach in the conversation.
+adaptation:
+  flexibility: Thresholds, labels, and presentation formatting may be adapted to the
+    target environment if methodological intent is preserved.
+  fixed_elements: Core decision logic, validation expectations, and documented dead
+    ends must remain unchanged unless explicitly re-authored.
+  target_requirements: The target system must preserve provenance, report deviations
+    explicitly, and avoid improvising around dead ends.
+policy:
+  data_classification: internal
+  redaction:
+    status: passed
+    last_checked: '2026-03-09T22:12:35Z'
+    checker: mtp-extract precheck
+    checker_version: 0.7.0
+    report_hash: sha256:985ef3256a5c4103ac08da718765e8fcda7844005630931ab9577ead6d7310a5
+  pii_scan:
+    status: passed
+    last_checked: '2026-03-09T22:12:35Z'
+    checker: mtp-extract precheck
+  secrets_scan:
+    status: passed
+    last_checked: '2026-03-09T22:12:35Z'
+    checker: mtp-extract precheck
+  client_identifier_scan:
+    status: not_run
+    last_checked: '2026-03-09T22:12:35Z'
+    checker: mtp-extract precheck
+  regulated_content:
+    status: passed
+    last_checked: '2026-03-09T22:12:35Z'
+    checker: mtp-extract precheck

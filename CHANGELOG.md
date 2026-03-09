@@ -2,6 +2,29 @@
 
 All notable changes to the MTP specification are documented in this file.
 
+## [0.7.0] — 2026-03-09
+
+### Extraction and benchmark layer
+- Added `tools/mtp-extract/` with draft extraction, provenance mapping, merge workflow, and policy precheck
+- Added reference conversation transcript and extracted draft under `examples/conversations/`
+- Added `tools/mtp-benchmark/` with benchmark suites, benchmark results, and adapter certification artifacts
+- Added reference benchmark suite/result/certification under `examples/benchmarks/`
+
+### Schemas
+- Added `mtp-benchmark-suite-v0.7.json`
+- Added `mtp-benchmark-result-v0.7.json`
+- Added `mtp-adapter-certification-v0.7.json`
+
+### Trust hardening
+- Extended `mtp-registry` signature envelopes to support `ed25519` in addition to `hmac-sha256`
+- Added CLI support for `--key-file` verification/signing flows
+- Added Ed25519 workflow and CLI tests
+
+### Documentation and CI
+- README now documents extraction-first quick start and benchmark tooling
+- CI now runs `mtp-extract` and `mtp-benchmark` tests plus reference example validation
+- Roadmap updated so `v0.7` is the current release layer before `v1.0`
+
 ## [0.6.0] — 2026-03-09
 
 ### Registry extension

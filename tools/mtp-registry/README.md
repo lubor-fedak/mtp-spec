@@ -20,7 +20,7 @@ pip install -e "tools/mtp-registry[dev]"
 
 Three sidecar artifact types:
 
-- **Signature Envelope** — detached HMAC-SHA256 signature over the canonical JSON representation of a package or execution report
+- **Signature Envelope** — detached `hmac-sha256` or `ed25519` signature over the canonical JSON representation of a package or execution report
 - **Approval Record** — governance decision (approved/rejected) tied to the signed artifact hash, with approver identity, policy, and rationale
 - **Registry Entry** — publishable asset record binding artifact, signatures, approvals, release status, and optional conformance/provenance metadata
 
@@ -38,12 +38,13 @@ Validate → Sign → Approve → Publish → Verify
 4. Registry entry publishes the artifact into a local registry
 5. Consumers verify the entry plus all linked trust artifacts
 
-### Reference Signature Profile
+### Reference Signature Profiles
 
 - Profile: `hmac-sha256`
+- Profile: `ed25519`
 - Canonicalization: `json-sorted-v1` (sorted keys, compact separators, UTF-8)
 
-This is a bootstrap profile for local and CI workflows. Future profiles can add asymmetric signatures without changing registry entry semantics.
+These are bootstrap profiles for local and CI workflows. Future profiles can add KMS-backed signatures without changing registry entry semantics.
 
 ### Registry Status
 
@@ -75,7 +76,15 @@ mtp-registry init registry/ --name "Internal MTP Registry"
 # 2. Sign a package
 export MTP_REGISTRY_SIGNING_KEY=your-shared-secret
 mtp-registry sign package.yaml \
+  --profile hmac-sha256 \
   --key-env MTP_REGISTRY_SIGNING_KEY \
+  --key-id dev-key \
+  --signer release-bot
+
+# 2b. Or use Ed25519
+mtp-registry sign package.yaml \
+  --profile ed25519 \
+  --key-file signer.pem \
   --key-id dev-key \
   --signer release-bot
 
@@ -83,6 +92,10 @@ mtp-registry sign package.yaml \
 mtp-registry verify package.yaml \
   --signature package.signature.v0.6.yaml \
   --key-env MTP_REGISTRY_SIGNING_KEY
+
+mtp-registry verify package.yaml \
+  --signature package.signature.v0.6.yaml \
+  --key-file signer.pub.pem
 
 # 4. Create approval record
 mtp-registry approve package.yaml \
@@ -148,7 +161,7 @@ These validate the trust layer only. They do not replace `mtp-package-v0.2.json`
 The v0.6 implementation is intentionally conservative:
 
 - Local filesystem registry only
-- HMAC-SHA256 reference profile only
+- HMAC-SHA256 and Ed25519 reference profiles only
 - Detached approvals only
 - No multi-party quorum logic
 - No external KMS or certificate chain

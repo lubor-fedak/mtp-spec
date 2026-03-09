@@ -1,0 +1,21 @@
+mtp_adapter_certification_version: '0.7'
+adapter_certification:
+  adapter: mock
+  variant: default
+  model: deterministic
+  suite_id: churn-risk-benchmark
+  benchmark_result_ref: examples/benchmarks/churn-risk-benchmark-result-v0.7.yaml
+  status: certified
+  certified_at: '2026-03-09T22:22:38Z'
+  thresholds:
+    min_comparison_drift: 1.0
+    min_state_agreement: 1.0
+    allowed_statuses:
+    - success
+  achieved:
+    available: true
+    executed: true
+    passed_thresholds: true
+    overall_status: success
+    comparison_drift: 1.0
+    state_agreement: 1.0

@@ -1,0 +1,65 @@
+mtp_benchmark_version: '0.7'
+benchmark_result:
+  suite_id: churn-risk-benchmark
+  suite_name: Customer Churn Risk Adapter Benchmark
+  generated_at: '2026-03-09T22:22:32Z'
+  package_ref: ../churn-risk-scoring-v0.2.yaml
+  data_ref: ../test-data-churn.csv
+  baseline_report_ref: ../churn-risk-scoring-mock-execution-report-v0.2.yaml
+  adapter_results:
+  - adapter: mock
+    variant: default
+    model: deterministic
+    available: true
+    executed: true
+    required: true
+    report_ref: churn-risk-benchmark-mock-report-v0.7.yaml
+    report_valid: true
+    overall_status: success
+    self_drift: 1.0
+    comparison_drift: 1.0
+    state_agreement: 1.0
+    difference_steps: []
+    thresholds:
+      min_comparison_drift: 1.0
+      min_state_agreement: 1.0
+      allowed_statuses:
+      - success
+    passed_thresholds: true
+  - adapter: anthropic
+    variant: default
+    model: claude-sonnet-4-20250514
+    available: false
+    executed: false
+    required: false
+    skipped_reason: adapter_not_available
+    thresholds:
+      min_comparison_drift: 0.7
+      min_state_agreement: 0.8
+      allowed_statuses:
+      - success
+      - partial
+      - deviation
+    passed_thresholds: true
+  - adapter: openai
+    variant: default
+    model: gpt-4o
+    available: false
+    executed: false
+    required: false
+    skipped_reason: adapter_not_available
+    thresholds:
+      min_comparison_drift: 0.7
+      min_state_agreement: 0.8
+      allowed_statuses:
+      - success
+      - partial
+      - deviation
+    passed_thresholds: true
+  summary:
+    total_adapters: 3
+    executed: 1
+    passed: 1
+    failed: 0
+    skipped: 2
+    suite_passed: true
