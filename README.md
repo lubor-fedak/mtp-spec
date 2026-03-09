@@ -126,7 +126,7 @@ All commands support `--format json` for machine-readable output with report has
 |---------|--------|-------|
 | v0.1 | ✅ Released | YAML format, manual extraction/application, JSON Schema |
 | v0.2.x | ✅ Released | Lifecycle, provenance, execution semantics, redaction, drift, conformance. Patch: 0.2.1 |
-| v0.3.x | ✅ Current | `mtp-lint` CLI: schema validator, redaction scanner (6 categories), completeness scorer, policy gate. Patch: 0.3.1 |
+| v0.3.x | ✅ Current | `mtp-lint` CLI: schema validator, redaction scanner (6 categories), completeness scorer, policy gate. Patch: 0.3.2 |
 | v0.4 | Planned | `mtp-run` reference runtime CLI, platform adapters |
 | v0.5 | Planned | Drift scoring engine, conformance test suite |
 | v0.6 | Planned | Registry specification, signatures, approval workflows |

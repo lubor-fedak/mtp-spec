@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from mtp_lint.schema_validator import version_at_least
+
 
 def _has(obj: dict, key: str) -> bool:
     """Check if key exists and has a non-empty value."""
@@ -75,7 +77,7 @@ def score_package(data: dict) -> dict:
         checks.append({"area": f"step_{step_num}", "check": "rationale_present", "passed": detail["has_rationale"]})
         checks.append({"area": f"step_{step_num}", "check": "validation_present", "passed": detail["has_validation"]})
 
-        if version >= "0.2":
+        if version_at_least(version, "0.2"):
             checks.append({"area": f"step_{step_num}", "check": "execution_semantics_present", "passed": detail["has_execution_semantics"]})
             checks.append({"area": f"step_{step_num}", "check": "provenance_present", "passed": detail["provenance"]["present"]})
             if detail["provenance"]["present"]:
@@ -88,7 +90,7 @@ def score_package(data: dict) -> dict:
     for i, ec in enumerate(edge_cases):
         checks.append({"area": f"edge_case_{i}", "check": "has_rationale", "passed": _has(ec, "rationale")})
         checks.append({"area": f"edge_case_{i}", "check": "has_severity", "passed": _has(ec, "severity")})
-        if version >= "0.2":
+        if version_at_least(version, "0.2"):
             checks.append({"area": f"edge_case_{i}", "check": "has_provenance", "passed": _has(ec, "provenance")})
 
     # --- Dead ends ---
@@ -97,7 +99,7 @@ def score_package(data: dict) -> dict:
     for i, de in enumerate(dead_ends):
         checks.append({"area": f"dead_end_{i}", "check": "has_reason", "passed": _has(de, "reason")})
         checks.append({"area": f"dead_end_{i}", "check": "has_lesson", "passed": _has(de, "lesson")})
-        if version >= "0.2":
+        if version_at_least(version, "0.2"):
             checks.append({"area": f"dead_end_{i}", "check": "has_provenance", "passed": _has(de, "provenance")})
 
     # --- Output ---
@@ -113,7 +115,7 @@ def score_package(data: dict) -> dict:
     checks.append({"area": "adaptation", "check": "target_requirements_present", "passed": _has(adaptation, "target_requirements")})
 
     # --- Policy (v0.2+) ---
-    if version >= "0.2":
+    if version_at_least(version, "0.2"):
         policy = data.get("policy", {})
         checks.append({"area": "policy", "check": "policy_present", "passed": bool(policy)})
         checks.append({"area": "policy", "check": "data_classification_present", "passed": _has(policy, "data_classification")})

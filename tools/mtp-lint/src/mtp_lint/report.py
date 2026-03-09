@@ -37,7 +37,7 @@ def generate_report(
         overall = "pass"
 
     report = {
-        "mtp_lint_version": "0.3.0",
+        "mtp_lint_version": "0.3.2",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "file": file_path,
         "artifact_type": artifact_type,

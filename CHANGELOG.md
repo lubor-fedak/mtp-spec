@@ -2,6 +2,13 @@
 
 All notable changes to the MTP specification are documented in this file.
 
+## [0.3.2] — 2026-03-09
+
+### mtp-lint hardening
+- Replaced string-based version checks with numeric version comparison, preventing future bugs such as `"0.10"` being treated as older than `"0.2"`.
+- Added explicit top-level type validation for loaded artifacts. Non-object YAML/JSON inputs now fail cleanly with input error instead of falling through unpredictably.
+- Aligned tool package metadata and generated reports to `mtp-lint` version `0.3.2`.
+
 ## [0.3] — 2026-03-09
 
 ### First tooling deliverable: mtp-lint

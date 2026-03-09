@@ -9,7 +9,13 @@ from pathlib import Path
 import click
 
 from mtp_lint import __version__
-from mtp_lint.schema_validator import load_package, detect_artifact_type, detect_version, validate_schema
+from mtp_lint.schema_validator import (
+    load_package,
+    detect_artifact_type,
+    detect_version,
+    validate_schema,
+    version_at_least,
+)
 from mtp_lint.redaction_scanner import scan_all
 from mtp_lint.completeness_scorer import score_package
 from mtp_lint.policy_gate import check_policy
@@ -75,7 +81,7 @@ def check(file: str, output_format: str, strict: bool, client_dict: str | None,
 
     # 4. Policy gate (packages only, v0.2+)
     policy_results = None
-    if artifact_type == "package" and version >= "0.2":
+    if artifact_type == "package" and version_at_least(version, "0.2"):
         policy_results = check_policy(data)
 
     # Assemble report

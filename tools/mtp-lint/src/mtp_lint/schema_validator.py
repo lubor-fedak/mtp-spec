@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -28,7 +29,7 @@ def _load_schema(name: str) -> dict:
 
 
 def load_package(path: str | Path) -> dict:
-    """Load a YAML or JSON MTP package file."""
+    """Load a YAML or JSON MTP artifact file."""
     p = Path(path)
     with open(p) as f:
         if p.suffix in (".yaml", ".yml"):
@@ -39,6 +40,10 @@ def load_package(path: str | Path) -> dict:
 
 def detect_artifact_type(data: dict) -> str:
     """Detect whether the data is a package or execution report."""
+    if not isinstance(data, dict):
+        raise ValueError(
+            f"Expected a top-level object/map, got {type(data).__name__}."
+        )
     if "execution_report" in data:
         return "execution-report"
     if "mtp_version" in data:
@@ -52,6 +57,19 @@ def detect_version(data: dict, artifact_type: str) -> str:
         spec_version = data.get("execution_report", {}).get("mtp_spec_version", "0.2")
         return spec_version
     return data.get("mtp_version", "0.1")
+
+
+def _parse_version(version: str) -> tuple[int, ...]:
+    """Parse dotted numeric MTP/tooling versions for safe comparisons."""
+    if not isinstance(version, str):
+        return (0,)
+    parts = re.findall(r"\d+", version)
+    return tuple(int(part) for part in parts) if parts else (0,)
+
+
+def version_at_least(version: str, minimum: str) -> bool:
+    """Return True if version >= minimum using numeric tuple comparison."""
+    return _parse_version(version) >= _parse_version(minimum)
 
 
 def validate_schema(data: dict, artifact_type: str | None = None, version: str | None = None) -> list[dict]:
