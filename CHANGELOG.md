@@ -38,6 +38,7 @@ All notable changes to the MTP specification are documented in this file.
 
 ### Test data
 - Added examples/test-data-churn.csv: sample data for the churn scoring package
+- Added examples/churn-risk-scoring-mock-execution-report-v0.2.yaml: static mock execution report for drift demos and schema validation examples.
 
 ## [0.3.2] — 2026-03-09
 

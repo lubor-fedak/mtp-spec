@@ -144,6 +144,7 @@ Supported adapters: `mock` (deterministic, no API keys), `anthropic` (Claude), `
 | File | Type | Description |
 |------|------|-------------|
 | [churn-risk-scoring-v0.2.yaml](examples/churn-risk-scoring-v0.2.yaml) | Package (v0.2) | Golden v0.2 package — customer churn scoring with full provenance, execution semantics, and policy envelope |
+| [churn-risk-scoring-mock-execution-report-v0.2.yaml](examples/churn-risk-scoring-mock-execution-report-v0.2.yaml) | Exec Report (v0.2) | Deterministic mock runtime report from `mtp-run exec` — 5 steps success, drift 1.0 |
 | [churn-risk-scoring-execution-report-v0.2.yaml](examples/churn-risk-scoring-execution-report-v0.2.yaml) | Exec Report (v0.2) | Execution report with deviation handling and drift score |
 | [test-data-churn.csv](examples/test-data-churn.csv) | Test Data | Sample data for running the churn scoring package |
 | [valuation-report-extraction.yaml](examples/valuation-report-extraction.yaml) | Package (v0.1) | Document processing methodology (v0.1 format) |
