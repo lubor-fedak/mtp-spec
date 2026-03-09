@@ -2,6 +2,43 @@
 
 All notable changes to the MTP specification are documented in this file.
 
+## [0.4] — 2026-03-09
+
+### First runtime deliverable: mtp-run
+- New Python CLI tool in `tools/mtp-run/`, installable via `pip install -e .`
+- Three commands: `exec` (execute package), `adapters` (list adapters), `drift` (compare reports)
+
+### Execution engine
+- Step-by-step execution with dependency chain resolution
+- Full execution semantics: on_failure (halt/skip_with_flag/retry/escalate), on_deviation (flag_and_proceed/halt/ask_human)
+- Retry support with configurable max_retries
+- Pipeline halt propagation: downstream steps auto-skipped on halt
+- Unmet dependency detection and skip with reason
+- Progress callbacks for CLI output
+
+### LLM adapters
+- Mock adapter: deterministic responses for testing/CI, controllable via FORCE_FAIL/FORCE_DEVIATE/FORCE_ESCALATE/FORCE_PARTIAL markers
+- Anthropic adapter: Claude API (Messages API), configurable model
+- OpenAI adapter: OpenAI + Azure OpenAI (Chat Completions API), configurable model and endpoint
+- All adapters: structured YAML response parsing with heuristic fallback
+
+### Execution report generation
+- Automated overall_status derivation per spec §7.2
+- Drift score computation per spec §8.3 with polarity normalization and missing component redistribution
+- Report hash for integrity verification
+- Output as YAML or JSON
+
+### Drift comparison
+- Cross-report step-by-step state comparison
+- State agreement metric
+- Platform and temporal comparison support
+
+### Schema fix
+- Execution report schema: allow null for validation_pass_rate, output_quality, edge_case_coverage (components that may be uncomputable)
+
+### Test data
+- Added examples/test-data-churn.csv: sample data for the churn scoring package
+
 ## [0.3.2] — 2026-03-09
 
 ### mtp-lint hardening

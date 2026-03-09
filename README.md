@@ -67,13 +67,23 @@ mtp-lint check your-package.yaml
 
 This runs schema validation, redaction scanning, completeness scoring, and the policy gate in one pass.
 
-### 3. Execute in a target system
+### 3. Execute with mtp-run
 
-Pass the validated package to your target AI using the [application prompt template](spec/MTP-SPEC-v0.2.md#111-target-system-prompt-template).
+```bash
+cd tools/mtp-run && pip install -e .
+mtp-run exec your-package.yaml --data your-data.csv --adapter mock      # test locally
+mtp-run exec your-package.yaml --data your-data.csv --adapter anthropic  # run via Claude
+```
+
+This executes each step through the selected LLM, respects execution semantics, and produces a standardized report.
 
 ### 4. Review the execution report
 
-Check step states, deviations, and drift against your baseline.
+Check step states, deviations, and drift. Compare across platforms:
+
+```bash
+mtp-run drift report-claude.yaml report-azure.yaml
+```
 
 ## Specification
 
@@ -112,13 +122,37 @@ cd tools/mtp-lint && pip install -e .
 
 All commands support `--format json` for machine-readable output with report hash. `check` exits with code 1 on schema errors, redaction findings, or policy gate failure.
 
+### mtp-run (v0.4)
+
+Reference runtime for executing MTP packages through LLM adapters. See [tools/mtp-run/README.md](tools/mtp-run/README.md) for full usage.
+
+```bash
+cd tools/mtp-run && pip install -e .           # mock adapter only
+cd tools/mtp-run && pip install -e ".[all]"    # all adapters (Claude, OpenAI, Azure)
+```
+
+| Command | What it does |
+|---------|-------------|
+| `mtp-run exec <package> --data <file>` | Execute a package against data via LLM adapter |
+| `mtp-run adapters` | List available adapters and their configuration status |
+| `mtp-run drift <report1> <report2>` | Compare two execution reports — state agreement and divergence |
+
+Supported adapters: `mock` (deterministic, no API keys), `anthropic` (Claude), `openai` (GPT-4o), `openai --azure` (Azure OpenAI).
+
 ## Examples
 
-| File | MTP Version | Description |
-|------|-------------|-------------|
-| [churn-risk-scoring-v0.2.yaml](examples/churn-risk-scoring-v0.2.yaml) | v0.2 | Golden v0.2 package — customer churn scoring with full provenance, execution semantics, and policy envelope |
-| [churn-risk-scoring-execution-report-v0.2.yaml](examples/churn-risk-scoring-execution-report-v0.2.yaml) | v0.2 | Execution report for the churn scoring package — includes deviation handling and drift score |
-| [valuation-report-extraction.yaml](examples/valuation-report-extraction.yaml) | v0.1 | Document processing methodology (v0.1 format, no provenance or policy) |
+| File | Type | Description |
+|------|------|-------------|
+| [churn-risk-scoring-v0.2.yaml](examples/churn-risk-scoring-v0.2.yaml) | Package (v0.2) | Golden v0.2 package — customer churn scoring with full provenance, execution semantics, and policy envelope |
+| [churn-risk-scoring-execution-report-v0.2.yaml](examples/churn-risk-scoring-execution-report-v0.2.yaml) | Exec Report (v0.2) | Execution report with deviation handling and drift score |
+| [test-data-churn.csv](examples/test-data-churn.csv) | Test Data | Sample data for running the churn scoring package |
+| [valuation-report-extraction.yaml](examples/valuation-report-extraction.yaml) | Package (v0.1) | Document processing methodology (v0.1 format) |
+
+Try it yourself:
+```bash
+mtp-lint check examples/churn-risk-scoring-v0.2.yaml
+mtp-run exec examples/churn-risk-scoring-v0.2.yaml --data examples/test-data-churn.csv --adapter mock
+```
 
 ## Roadmap
 
@@ -126,8 +160,8 @@ All commands support `--format json` for machine-readable output with report has
 |---------|--------|-------|
 | v0.1 | ✅ Released | YAML format, manual extraction/application, JSON Schema |
 | v0.2.x | ✅ Released | Lifecycle, provenance, execution semantics, redaction, drift, conformance. Patch: 0.2.1 |
-| v0.3.x | ✅ Current | `mtp-lint` CLI: schema validator, redaction scanner (6 categories), completeness scorer, policy gate. Patch: 0.3.2 |
-| v0.4 | Planned | `mtp-run` reference runtime CLI, platform adapters |
+| v0.3.x | ✅ Released | `mtp-lint` CLI: schema validator, redaction scanner (6 categories), completeness scorer, policy gate. Patch: 0.3.2 |
+| v0.4 | ✅ Current | `mtp-run` reference runtime CLI: execution engine, adapters (mock, Anthropic, OpenAI, Azure), drift comparison |
 | v0.5 | Planned | Drift scoring engine, conformance test suite |
 | v0.6 | Planned | Registry specification, signatures, approval workflows |
 | v1.0 | Target | Production adapters, community benchmarks, enterprise reference architecture |

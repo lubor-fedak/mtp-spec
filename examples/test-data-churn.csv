@@ -1,0 +1,9 @@
+account_id,avg_logins_recent_30d,avg_logins_prior_60d,avg_sentiment,ticket_count,features_used,features_total,days_to_renewal,contract_value_annual
+ACC-001,12.3,15.1,0.6,3,8,12,45,24000
+ACC-002,2.1,14.7,-0.3,7,3,12,22,48000
+ACC-003,18.0,17.5,0.8,1,10,12,190,36000
+ACC-004,0.0,8.2,-0.7,12,2,12,15,72000
+ACC-005,5.5,5.8,0.2,0,6,12,95,18000
+ACC-006,0.0,0.0,0.0,0,1,12,300,0
+ACC-007,9.0,11.0,0.4,2,7,12,60,30000
+ACC-008,1.2,10.5,-0.5,5,4,12,30,55000

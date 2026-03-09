@@ -619,8 +619,8 @@
           "properties": {
             "step_fidelity": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
             "deviation_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Already inverted: 1.0 = no deviations" },
-            "validation_pass_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-            "output_quality": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "validation_pass_rate": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0, "description": "null if no validations to check" },
+            "output_quality": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0, "description": "null if no quality checks defined" },
             "edge_case_coverage": { "type": ["number", "null"], "minimum": 0.0, "maximum": 1.0, "description": "null if no edge cases encountered" },
             "novel_situation_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Already inverted: 1.0 = no novel situations" },
             "dead_end_avoidance": { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Binary: 1.0 or 0.0" }

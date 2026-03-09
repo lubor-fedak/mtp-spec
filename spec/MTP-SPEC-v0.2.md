@@ -822,7 +822,7 @@ A valid benchmark must:
 | v0.1 | ✅ Foundation | YAML format, manual extraction/application, JSON Schema |
 | v0.2 | ✅ Control Plane | Lifecycle (Extract→Validate→Execute→Report→Compare→Version), provenance, execution semantics, redaction discipline, drift measurement, conformance levels, benchmark framework |
 | v0.3 | ✅ Tooling | `mtp-lint` CLI: schema validator, redaction scanner (PII, secrets, entropy, client IDs, regulated content, literal data), completeness scorer, enterprise policy gate |
-| v0.4 | Planned | `mtp-run` reference runtime CLI, execution report normalizer, platform adapters (Claude, ChatGPT → MTP extraction) |
+| v0.4 | ✅ Runtime | `mtp-run` reference runtime CLI: step-by-step execution engine, LLM adapters (mock, Anthropic, OpenAI, Azure OpenAI), execution report generation with drift scoring, cross-report drift comparison |
 | v0.5 | Planned | Drift scoring engine, conformance test suite |
 | v0.6 | Planned | Registry specification, package signatures, approval workflows |
 | v1.0 | Target | Production-ready adapters for major platforms, community-validated benchmarks, enterprise reference architecture |
