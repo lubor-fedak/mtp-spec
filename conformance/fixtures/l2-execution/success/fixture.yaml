@@ -1,0 +1,12 @@
+id: l2-execution-success
+level: l2
+kind: execution
+description: Mock execution should produce success for both steps and overall success.
+package: package.yaml
+data: ../../../../examples/test-data-churn.csv
+adapter: mock
+expect:
+  overall_status: success
+  step_states:
+    1: success
+    2: success

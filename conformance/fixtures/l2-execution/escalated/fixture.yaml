@@ -1,0 +1,12 @@
+id: l2-execution-escalated
+level: l2
+kind: execution
+description: Escalated state must halt the pipeline and yield overall escalated.
+package: package.yaml
+data: ../../../../examples/test-data-churn.csv
+adapter: mock
+expect:
+  overall_status: escalated
+  step_states:
+    1: escalated
+    2: skipped

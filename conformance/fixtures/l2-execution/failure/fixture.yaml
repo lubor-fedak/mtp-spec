@@ -1,0 +1,12 @@
+id: l2-execution-failure
+level: l2
+kind: execution
+description: Blocking failure must halt the pipeline and yield overall failure.
+package: package.yaml
+data: ../../../../examples/test-data-churn.csv
+adapter: mock
+expect:
+  overall_status: failure
+  step_states:
+    1: failure
+    2: skipped

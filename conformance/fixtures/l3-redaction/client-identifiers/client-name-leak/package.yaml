@@ -1,0 +1,40 @@
+mtp_version: "0.2"
+package:
+  id: "30000000-0000-4000-8000-000000000003"
+  name: "Client Identifier Leak Fixture"
+  version: "1.0.0"
+  created: "2026-03-09T00:00:00Z"
+  author: "conformance-suite"
+intent:
+  goal: "Verify that redaction scanning catches leaked client-specific identifiers."
+  context: "This methodology was adapted from the Acme Transformation Program."
+input:
+  description: "Synthetic input for redaction conformance."
+methodology:
+  approach: "Minimal valid package with an intentionally leaked client program name."
+  steps:
+    - step: 1
+      name: "Client Identifier Scan Step"
+      action: "Review conformance behavior for leaked client identifiers."
+      provenance:
+        source_type: "manual"
+        source_ref: "fixture-client-id"
+        confidence: "high"
+      execution_semantics:
+        on_success: "proceed"
+        on_failure: "halt"
+        on_deviation: "flag_and_proceed"
+output:
+  description: "Synthetic output."
+policy:
+  data_classification: "internal"
+  redaction:
+    status: "not_run"
+  pii_scan:
+    status: "not_run"
+  secrets_scan:
+    status: "not_run"
+  client_identifier_scan:
+    status: "not_run"
+  regulated_content:
+    status: "not_run"

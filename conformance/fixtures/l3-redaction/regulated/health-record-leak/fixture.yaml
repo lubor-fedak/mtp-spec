@@ -1,0 +1,10 @@
+id: l3-redaction-regulated-health
+level: l3
+kind: redaction
+description: Validator must detect regulated-content indicators in methodology text.
+artifact: package.yaml
+expect:
+  passed: false
+  categories:
+    - regulated_content
+  policy_gate_passed: false

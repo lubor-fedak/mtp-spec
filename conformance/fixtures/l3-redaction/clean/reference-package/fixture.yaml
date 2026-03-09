@@ -1,0 +1,9 @@
+id: l3-redaction-clean-reference
+level: l3
+kind: redaction
+description: Clean reference package should pass redaction scanning with no findings.
+artifact: ../../../../../examples/churn-risk-scoring-v0.2.yaml
+expect:
+  passed: true
+  categories: []
+  policy_gate_passed: true

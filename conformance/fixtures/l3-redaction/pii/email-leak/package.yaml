@@ -1,0 +1,39 @@
+mtp_version: "0.2"
+package:
+  id: "30000000-0000-4000-8000-000000000001"
+  name: "PII Leak Fixture"
+  version: "1.0.0"
+  created: "2026-03-09T00:00:00Z"
+  author: "analyst@example.com"
+intent:
+  goal: "Verify that redaction scanning catches leaked email addresses."
+input:
+  description: "Synthetic input for redaction conformance."
+methodology:
+  approach: "Minimal valid package with intentionally leaked PII in metadata."
+  steps:
+    - step: 1
+      name: "PII Scan Step"
+      action: "Review conformance behavior for leaked email metadata."
+      provenance:
+        source_type: "manual"
+        source_ref: "fixture-pii"
+        confidence: "high"
+      execution_semantics:
+        on_success: "proceed"
+        on_failure: "halt"
+        on_deviation: "flag_and_proceed"
+output:
+  description: "Synthetic output."
+policy:
+  data_classification: "internal"
+  redaction:
+    status: "not_run"
+  pii_scan:
+    status: "not_run"
+  secrets_scan:
+    status: "not_run"
+  client_identifier_scan:
+    status: "not_run"
+  regulated_content:
+    status: "not_run"

@@ -1,0 +1,27 @@
+mtp_version: "0.2"
+package:
+  id: "10000000-0000-4000-8000-000000000001"
+  name: "Invalid Conformance Package"
+  version: "1.0.0"
+  created: "2026-03-09T00:00:00Z"
+  author: "conformance-suite"
+intent:
+  goal: "Demonstrate a schema-invalid package for conformance testing."
+input:
+  description: "Synthetic input for schema validation."
+methodology:
+  approach: "Minimal invalid package for strict schema validation testing."
+  steps:
+    - step: 1
+      name: "Invalid Step"
+      action: "Perform a synthetic invalid action for conformance."
+      provenance:
+        source_type: "manual"
+        source_ref: "fixture-invalid"
+        confidence: "high"
+      execution_semantics:
+        on_success: "proceed"
+        on_failure: "halt"
+        on_deviation: "flag_and_proceed"
+output:
+  description: "Synthetic output."

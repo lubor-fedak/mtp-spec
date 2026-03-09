@@ -1,0 +1,7 @@
+id: l1-invalid-missing-policy
+level: l1
+kind: package_validation
+description: Package without required policy envelope must fail v0.2 schema validation.
+artifact: package.yaml
+expect:
+  valid: false

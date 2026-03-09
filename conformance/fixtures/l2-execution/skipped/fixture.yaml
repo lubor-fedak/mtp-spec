@@ -1,0 +1,12 @@
+id: l2-execution-skipped
+level: l2
+kind: execution
+description: Non-blocking failure with unmet dependency must yield skipped downstream step and overall partial.
+package: package.yaml
+data: ../../../../examples/test-data-churn.csv
+adapter: mock
+expect:
+  overall_status: partial
+  step_states:
+    1: failure
+    2: skipped

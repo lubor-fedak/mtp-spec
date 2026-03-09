@@ -1,0 +1,57 @@
+mtp_version: "0.2"
+package:
+  id: "20000000-0000-4000-8000-000000000005"
+  name: "Conformance Skipped Fixture"
+  version: "1.0.0"
+  created: "2026-03-09T00:00:00Z"
+  author: "conformance-suite"
+intent:
+  goal: "Verify unmet dependency skip handling for conformance."
+input:
+  description: "Synthetic CSV input for conformance execution."
+methodology:
+  approach: "Two-step deterministic execution with a non-blocking failure on the first step."
+  steps:
+    - step: 1
+      name: "Non-blocking Failure Step"
+      action: "FORCE_FAIL while running a deterministic conformance analysis."
+      provenance:
+        source_type: "manual"
+        source_ref: "fixture-skipped-step-1"
+        confidence: "high"
+      execution_semantics:
+        on_success: "proceed"
+        on_failure: "skip_with_flag"
+        on_deviation: "flag_and_proceed"
+      validation: "Step must report failure without halting the pipeline."
+    - step: 2
+      name: "Dependency Step"
+      action: "Attempt to summarize a conformance analysis with unmet dependency."
+      depends_on: [1]
+      provenance:
+        source_type: "manual"
+        source_ref: "fixture-skipped-step-2"
+        confidence: "high"
+      execution_semantics:
+        on_success: "proceed"
+        on_failure: "halt"
+        on_deviation: "flag_and_proceed"
+      validation: "Step should be skipped because dependency failed."
+output:
+  description: "Synthetic conformance output."
+  quality_checks:
+    - check: "All steps produce structured output"
+      failure_action: "Fail conformance."
+      is_blocking: true
+policy:
+  data_classification: "internal"
+  redaction:
+    status: "passed"
+  pii_scan:
+    status: "passed"
+  secrets_scan:
+    status: "passed"
+  client_identifier_scan:
+    status: "passed"
+  regulated_content:
+    status: "passed"

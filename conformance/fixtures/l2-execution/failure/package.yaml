@@ -1,0 +1,57 @@
+mtp_version: "0.2"
+package:
+  id: "20000000-0000-4000-8000-000000000004"
+  name: "Conformance Failure Fixture"
+  version: "1.0.0"
+  created: "2026-03-09T00:00:00Z"
+  author: "conformance-suite"
+intent:
+  goal: "Verify blocking failure handling for conformance."
+input:
+  description: "Synthetic CSV input for conformance execution."
+methodology:
+  approach: "Two-step deterministic execution with a blocking failure on the first step."
+  steps:
+    - step: 1
+      name: "Failure Step"
+      action: "FORCE_FAIL while running a deterministic conformance analysis."
+      provenance:
+        source_type: "manual"
+        source_ref: "fixture-failure-step-1"
+        confidence: "high"
+      execution_semantics:
+        on_success: "proceed"
+        on_failure: "halt"
+        on_deviation: "flag_and_proceed"
+      validation: "Failure step must produce a structured failure."
+    - step: 2
+      name: "Blocked Step"
+      action: "Summarize the blocked conformance analysis after failure."
+      depends_on: [1]
+      provenance:
+        source_type: "manual"
+        source_ref: "fixture-failure-step-2"
+        confidence: "high"
+      execution_semantics:
+        on_success: "proceed"
+        on_failure: "halt"
+        on_deviation: "flag_and_proceed"
+      validation: "Blocked step should not run."
+output:
+  description: "Synthetic conformance output."
+  quality_checks:
+    - check: "All steps produce structured output"
+      failure_action: "Fail conformance."
+      is_blocking: true
+policy:
+  data_classification: "internal"
+  redaction:
+    status: "passed"
+  pii_scan:
+    status: "passed"
+  secrets_scan:
+    status: "passed"
+  client_identifier_scan:
+    status: "passed"
+  regulated_content:
+    status: "passed"

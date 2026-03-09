@@ -85,6 +85,15 @@ Check step states, deviations, and drift. Compare across platforms:
 mtp-run drift report-claude.yaml report-azure.yaml
 ```
 
+### 5. Run the conformance suite
+
+```bash
+cd tools/mtp-conformance && pip install -e .
+mtp-conformance run --level l3
+```
+
+This runs the fixture-driven L1/L2/L3 conformance corpus across schema validation, execution semantics, redaction detection, provenance presence, and drift reference cases.
+
 ## Specification
 
 📄 **[MTP Specification v0.2](spec/MTP-SPEC-v0.2.md)** — Full specification: lifecycle, package format, provenance, execution semantics, redaction discipline, drift measurement, conformance levels, and benchmark framework. Current patch: **0.2.1**.
@@ -141,6 +150,23 @@ cd tools/mtp-run && pip install -e ".[all]"    # all adapters (Claude, OpenAI, A
 
 Supported adapters: `mock` (deterministic, no API keys), `anthropic` (Claude), `openai` (GPT-4o), `openai --azure` (Azure OpenAI).
 
+### mtp-conformance (v0.5)
+
+Reference conformance suite and release-gate runner. See [tools/mtp-conformance/README.md](tools/mtp-conformance/README.md) for full usage.
+
+```bash
+cd tools/mtp-conformance && pip install -e .
+```
+
+| Command | What it does |
+|---------|-------------|
+| `mtp-conformance run --level l1` | Run package-schema conformance fixtures |
+| `mtp-conformance run --level l2` | Run cumulative L1 + execution-state fixtures |
+| `mtp-conformance run --level l3` | Run cumulative L1 + L2 + redaction + drift + provenance fixtures |
+| `mtp-conformance run --level all --format json` | Emit full machine-readable release-gate summary with stable summary hash |
+
+Fixture corpus lives in [conformance/fixtures/README.md](conformance/fixtures/README.md). CI runs the conformance suite automatically as a release gate.
+
 ## Examples
 
 | File | Type | Description |
@@ -164,8 +190,8 @@ mtp-run exec examples/churn-risk-scoring-v0.2.yaml --data examples/test-data-chu
 | v0.1 | ✅ Released | YAML format, manual extraction/application, JSON Schema |
 | v0.2.x | ✅ Released | Lifecycle, provenance, execution semantics, redaction, drift, conformance. Patch: 0.2.1 |
 | v0.3.x | ✅ Released | `mtp-lint` CLI: schema validator, redaction scanner (6 categories), completeness scorer, policy gate. Patch: 0.3.2 |
-| v0.4 | ✅ Current | `mtp-run` reference runtime CLI: execution engine, adapters (mock, Anthropic, OpenAI, Azure), drift comparison |
-| v0.5 | Planned | Drift scoring engine, conformance test suite |
+| v0.4 | ✅ Released | `mtp-run` reference runtime CLI: execution engine, adapters (mock, Anthropic, OpenAI, Azure), drift comparison |
+| v0.5 | ✅ Current | `mtp-conformance` fixture runner, L1/L2/L3 fixture packs, release-gate summaries, CI conformance reporting |
 | v0.6 | Planned | Registry specification, signatures, approval workflows |
 | v1.0 | Target | Production adapters, community benchmarks, enterprise reference architecture |
 

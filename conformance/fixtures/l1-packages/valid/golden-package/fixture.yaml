@@ -1,0 +1,7 @@
+id: l1-valid-golden-package
+level: l1
+kind: package_validation
+description: Golden v0.2 package must pass strict schema validation.
+artifact: ../../../../../examples/churn-risk-scoring-v0.2.yaml
+expect:
+  valid: true

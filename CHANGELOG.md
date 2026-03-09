@@ -2,6 +2,28 @@
 
 All notable changes to the MTP specification are documented in this file.
 
+## [0.5.0] — 2026-03-09
+
+### Formal conformance suite
+- Added new `tools/mtp-conformance/` Python CLI with `mtp-conformance run --level l1|l2|l3|all`
+- Added cumulative conformance execution model with stable summary hashing for release-gate use
+- Added direct orchestration of `mtp-lint` and `mtp-run` capabilities from a single conformance entrypoint
+
+### Fixture packs
+- Added repository-level `conformance/fixtures/` corpus
+- L1 fixtures: schema-valid and schema-invalid package cases
+- L2 fixtures: deterministic execution coverage for all six states (`success`, `partial`, `deviation`, `failure`, `skipped`, `escalated`)
+- L3 fixtures: redaction leak corpus, provenance presence checks, self-score drift references, cross-report drift comparison
+
+### Tests and CI
+- Added `mtp-conformance` CLI tests
+- CI now runs `mtp-conformance` unit tests and release-gate conformance levels `l1`, `l2`, and `l3`
+
+### Documentation
+- README now documents `mtp-conformance` as the `v0.5` deliverable
+- Conformance fixtures documentation updated from planned scaffold to implemented corpus
+- Spec roadmap updated so `v0.5` reflects the shipped conformance suite
+
 ## [0.4.1] — 2026-03-09
 
 ### Drift engine completion
@@ -9,17 +31,17 @@ All notable changes to the MTP specification are documented in this file.
 - New `mtp-run score` command: compute drift score for a single execution report with per-component breakdown
 - CLI drift command now shows weighted drift scores alongside step-state agreement
 
-### Code cleanup
-- Removed dead code: old `adapters/` package (5 files), `executor.py`, `prompt_builder.py`, `report_builder.py`, `response_parser.py`
-- Active modules: `adapters.py` (mock + anthropic + openai), `drift.py`, `io_utils.py`, `reporting.py`, `cli.py`
-- All adapters (mock, anthropic, openai, azure-openai) fully implemented in single `adapters.py`
+### Runtime hardening
+- Adapter registry now reports real runtime readiness for `mock`, `anthropic`, `openai`, and `azure-openai`
+- Runtime exceptions are captured as step failures so execution semantics still apply
+- End-to-end runtime paths now produce schema-valid execution reports for mock and real-adapter flows
 
 ### Verified
 - `mtp-run exec` with mock → all SUCCESS, drift 1.0, report schema-valid
 - `mtp-run score` on hand-written report → 0.92 (step 3 deviation correctly scored)
 - `mtp-run score` on mock report → 1.0 (edge_case_coverage excluded, weights redistributed)
-- `mtp-run drift` mock vs azure → 80% state agreement, drift scores 1.0 vs 0.96
-- `mtp-run adapters` → mock READY, anthropic/openai/azure AVAILABLE
+- `mtp-run drift` mock vs azure → 80% state agreement, self-scores 1.0 vs 0.92, cross-report drift 0.9111
+- `mtp-run adapters` → mock READY, configured adapters surfaced with real availability states
 
 ## [0.4] — 2026-03-09
 
@@ -182,7 +204,7 @@ All notable changes to the MTP specification are documented in this file.
 - Reordered from feature-based to capability-based progression:
   - v0.3: validator + linter
   - v0.4: runtime CLI + adapters
-  - v0.5: drift scoring + conformance suite
+  - v0.5: formal conformance suite + fixture runner
   - v0.6: registry + signatures
   - v1.0: production adapters + benchmarks
 

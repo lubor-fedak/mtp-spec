@@ -1,0 +1,11 @@
+id: l3-drift-cross-report-reference
+level: l3
+kind: drift_compare
+description: Mock reference vs example deviation report must produce the known cross-report drift score.
+baseline_report: ../../../../../examples/churn-risk-scoring-mock-execution-report-v0.2.yaml
+candidate_report: ../../../../../examples/churn-risk-scoring-execution-report-v0.2.yaml
+expect:
+  composite: 0.9111
+  state_agreement: 0.8
+  difference_steps: [3]
+  tolerance: 0.0001

@@ -1,0 +1,12 @@
+id: l2-execution-partial
+level: l2
+kind: execution
+description: Partial step must yield overall partial while allowing downstream success.
+package: package.yaml
+data: ../../../../examples/test-data-churn.csv
+adapter: mock
+expect:
+  overall_status: partial
+  step_states:
+    1: partial
+    2: success

@@ -1,0 +1,10 @@
+id: l3-provenance-reference-package
+level: l3
+kind: provenance
+description: Reference package must contain provenance on steps, edge cases, and dead ends.
+artifact: ../../../../examples/churn-risk-scoring-v0.2.yaml
+expect:
+  steps: true
+  edge_cases: true
+  dead_ends: true
+  execution_semantics: true

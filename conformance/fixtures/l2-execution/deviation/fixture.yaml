@@ -1,0 +1,12 @@
+id: l2-execution-deviation
+level: l2
+kind: execution
+description: Deviation step must yield overall deviation while allowing downstream success.
+package: package.yaml
+data: ../../../../examples/test-data-churn.csv
+adapter: mock
+expect:
+  overall_status: deviation
+  step_states:
+    1: deviation
+    2: success

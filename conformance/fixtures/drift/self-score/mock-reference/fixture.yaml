@@ -1,0 +1,16 @@
+id: l3-drift-self-mock-reference
+level: l3
+kind: drift_self
+description: Mock reference report must score as perfect self-drift.
+report: ../../../../../examples/churn-risk-scoring-mock-execution-report-v0.2.yaml
+expect:
+  composite: 1.0
+  tolerance: 0.0001
+  components:
+    step_fidelity: 1.0
+    deviation_rate: 1.0
+    validation_pass_rate: 1.0
+    output_quality: 1.0
+    edge_case_coverage: null
+    novel_situation_rate: 1.0
+    dead_end_avoidance: 1.0

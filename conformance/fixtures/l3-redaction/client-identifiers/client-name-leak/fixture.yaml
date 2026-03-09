@@ -1,0 +1,12 @@
+id: l3-redaction-client-identifier
+level: l3
+kind: redaction
+description: Validator must detect leaked client identifiers when a dictionary is supplied.
+artifact: package.yaml
+client_dictionary:
+  - "Acme Transformation Program"
+expect:
+  passed: false
+  categories:
+    - client_identifier
+  policy_gate_passed: false

@@ -1,0 +1,10 @@
+id: l3-redaction-pii-email
+level: l3
+kind: redaction
+description: Validator must detect leaked email addresses in package content.
+artifact: package.yaml
+expect:
+  passed: false
+  categories:
+    - pii
+  policy_gate_passed: false
