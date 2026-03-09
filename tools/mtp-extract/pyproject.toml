@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mtp-extract"
-version = "0.7.0"
+version = "1.0.0"
 description = "Extraction CLI for generating draft MTP packages from conversations"
 readme = "README.md"
 license = "Apache-2.0"

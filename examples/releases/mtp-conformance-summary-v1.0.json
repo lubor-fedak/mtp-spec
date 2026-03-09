@@ -1,0 +1,771 @@
+{
+  "level": "all",
+  "total_fixtures": 21,
+  "passed": 21,
+  "failed": 0,
+  "fixtures": [
+    {
+      "id": "l1-invalid-missing-policy",
+      "level": "l1",
+      "kind": "package_validation",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "artifact": "conformance/fixtures/l1-packages/invalid/missing-policy/package.yaml",
+        "artifact_type": "package",
+        "version": "0.2",
+        "actual_valid": false,
+        "expected_valid": false,
+        "error_count": 1,
+        "errors": [
+          {
+            "path": "$",
+            "message": "'policy' is a required property",
+            "severity": "error"
+          }
+        ]
+      },
+      "duration_ms": 4
+    },
+    {
+      "id": "l1-registry-valid-approval",
+      "level": "l1",
+      "kind": "registry_validation",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "artifact": "examples/registry/approvals/b2c3d4e5-f6a7-8901-bcde-f12345678901/1.0.0/churn-risk-scoring.approval.v0.6.yaml",
+        "artifact_type": "approval_record",
+        "expected_type": "approval_record",
+        "actual_valid": true,
+        "expected_valid": true,
+        "type_matches": true,
+        "error_count": 0,
+        "errors": []
+      },
+      "duration_ms": 3
+    },
+    {
+      "id": "l1-registry-valid-entry",
+      "level": "l1",
+      "kind": "registry_validation",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "artifact": "examples/registry/entries/customer-churn-risk-scoring-1.0.0.registry-entry.yaml",
+        "artifact_type": "registry_entry",
+        "expected_type": "registry_entry",
+        "actual_valid": true,
+        "expected_valid": true,
+        "type_matches": true,
+        "error_count": 0,
+        "errors": []
+      },
+      "duration_ms": 3
+    },
+    {
+      "id": "l1-registry-valid-manifest",
+      "level": "l1",
+      "kind": "registry_validation",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "artifact": "examples/registry/registry.yaml",
+        "artifact_type": "registry_manifest",
+        "expected_type": "registry_manifest",
+        "actual_valid": true,
+        "expected_valid": true,
+        "type_matches": true,
+        "error_count": 0,
+        "errors": []
+      },
+      "duration_ms": 1
+    },
+    {
+      "id": "l1-registry-valid-signature",
+      "level": "l1",
+      "kind": "registry_validation",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "artifact": "examples/registry/signatures/b2c3d4e5-f6a7-8901-bcde-f12345678901/1.0.0/churn-risk-scoring.signature.v0.6.yaml",
+        "artifact_type": "signature_envelope",
+        "expected_type": "signature_envelope",
+        "actual_valid": true,
+        "expected_valid": true,
+        "type_matches": true,
+        "error_count": 0,
+        "errors": []
+      },
+      "duration_ms": 3
+    },
+    {
+      "id": "l1-valid-golden-package",
+      "level": "l1",
+      "kind": "package_validation",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "artifact": "examples/churn-risk-scoring-v0.2.yaml",
+        "artifact_type": "package",
+        "version": "0.2",
+        "actual_valid": true,
+        "expected_valid": true,
+        "error_count": 0,
+        "errors": []
+      },
+      "duration_ms": 28
+    },
+    {
+      "id": "l2-execution-deviation",
+      "level": "l2",
+      "kind": "execution",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "report_valid": true,
+        "report_errors": [],
+        "expected_overall_status": "deviation",
+        "actual_overall_status": "deviation",
+        "expected_step_states": {
+          "1": "deviation",
+          "2": "success"
+        },
+        "actual_step_states": {
+          "1": "deviation",
+          "2": "success"
+        },
+        "mismatches": []
+      },
+      "duration_ms": 9
+    },
+    {
+      "id": "l2-execution-escalated",
+      "level": "l2",
+      "kind": "execution",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "report_valid": true,
+        "report_errors": [],
+        "expected_overall_status": "escalated",
+        "actual_overall_status": "escalated",
+        "expected_step_states": {
+          "1": "escalated",
+          "2": "skipped"
+        },
+        "actual_step_states": {
+          "1": "escalated",
+          "2": "skipped"
+        },
+        "mismatches": []
+      },
+      "duration_ms": 7
+    },
+    {
+      "id": "l2-execution-failure",
+      "level": "l2",
+      "kind": "execution",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "report_valid": true,
+        "report_errors": [],
+        "expected_overall_status": "failure",
+        "actual_overall_status": "failure",
+        "expected_step_states": {
+          "1": "failure",
+          "2": "skipped"
+        },
+        "actual_step_states": {
+          "1": "failure",
+          "2": "skipped"
+        },
+        "mismatches": []
+      },
+      "duration_ms": 8
+    },
+    {
+      "id": "l2-execution-partial",
+      "level": "l2",
+      "kind": "execution",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "report_valid": true,
+        "report_errors": [],
+        "expected_overall_status": "partial",
+        "actual_overall_status": "partial",
+        "expected_step_states": {
+          "1": "partial",
+          "2": "success"
+        },
+        "actual_step_states": {
+          "1": "partial",
+          "2": "success"
+        },
+        "mismatches": []
+      },
+      "duration_ms": 8
+    },
+    {
+      "id": "l2-execution-skipped",
+      "level": "l2",
+      "kind": "execution",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "report_valid": true,
+        "report_errors": [],
+        "expected_overall_status": "partial",
+        "actual_overall_status": "partial",
+        "expected_step_states": {
+          "1": "failure",
+          "2": "skipped"
+        },
+        "actual_step_states": {
+          "1": "failure",
+          "2": "skipped"
+        },
+        "mismatches": []
+      },
+      "duration_ms": 8
+    },
+    {
+      "id": "l2-execution-success",
+      "level": "l2",
+      "kind": "execution",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "report_valid": true,
+        "report_errors": [],
+        "expected_overall_status": "success",
+        "actual_overall_status": "success",
+        "expected_step_states": {
+          "1": "success",
+          "2": "success"
+        },
+        "actual_step_states": {
+          "1": "success",
+          "2": "success"
+        },
+        "mismatches": []
+      },
+      "duration_ms": 8
+    },
+    {
+      "id": "l3-drift-cross-report-reference",
+      "level": "l3",
+      "kind": "drift_compare",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "actual": {
+          "baseline": {
+            "target_platform": "mock-adapter-v0.4",
+            "overall_status": "success",
+            "drift_score": {
+              "composite": 1.0,
+              "components": {
+                "step_fidelity": 1.0,
+                "deviation_rate": 1.0,
+                "validation_pass_rate": 1.0,
+                "output_quality": 1.0,
+                "edge_case_coverage": null,
+                "novel_situation_rate": 1.0,
+                "dead_end_avoidance": 1.0
+              },
+              "weights_used": {
+                "step_fidelity": 0.2778,
+                "deviation_rate": 0.1667,
+                "validation_pass_rate": 0.2778,
+                "output_quality": 0.2222,
+                "novel_situation_rate": 0.0333,
+                "dead_end_avoidance": 0.0222
+              }
+            }
+          },
+          "candidate": {
+            "target_platform": "azure-openai-gpt-4o",
+            "overall_status": "deviation",
+            "drift_score": {
+              "composite": 0.92,
+              "components": {
+                "step_fidelity": 0.8,
+                "deviation_rate": 0.8,
+                "validation_pass_rate": 1.0,
+                "output_quality": 1.0,
+                "edge_case_coverage": 1.0,
+                "novel_situation_rate": 1.0,
+                "dead_end_avoidance": 1.0
+              },
+              "weights_used": {
+                "step_fidelity": 0.25,
+                "deviation_rate": 0.15,
+                "validation_pass_rate": 0.25,
+                "output_quality": 0.2,
+                "edge_case_coverage": 0.1,
+                "novel_situation_rate": 0.03,
+                "dead_end_avoidance": 0.02
+              }
+            }
+          },
+          "comparison_drift": {
+            "composite": 0.9111,
+            "components": {
+              "step_fidelity": 0.8,
+              "deviation_rate": 0.8,
+              "validation_pass_rate": 1.0,
+              "output_quality": 1.0,
+              "edge_case_coverage": null,
+              "novel_situation_rate": 1.0,
+              "dead_end_avoidance": 1.0
+            },
+            "weights_used": {
+              "step_fidelity": 0.2778,
+              "deviation_rate": 0.1667,
+              "validation_pass_rate": 0.2778,
+              "output_quality": 0.2222,
+              "novel_situation_rate": 0.0333,
+              "dead_end_avoidance": 0.0222
+            }
+          },
+          "state_agreement": 0.8,
+          "matching_steps": 4,
+          "total_steps": 5,
+          "differences": [
+            {
+              "step": 3,
+              "baseline_state": "success",
+              "candidate_state": "deviation"
+            }
+          ]
+        },
+        "expected": {
+          "composite": 0.9111,
+          "state_agreement": 0.8,
+          "difference_steps": [
+            3
+          ],
+          "tolerance": 0.0001
+        },
+        "mismatches": []
+      },
+      "duration_ms": 22
+    },
+    {
+      "id": "l3-drift-self-deviation-reference",
+      "level": "l3",
+      "kind": "drift_self",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "actual": {
+          "composite": 0.92,
+          "components": {
+            "step_fidelity": 0.8,
+            "deviation_rate": 0.8,
+            "validation_pass_rate": 1.0,
+            "output_quality": 1.0,
+            "edge_case_coverage": 1.0,
+            "novel_situation_rate": 1.0,
+            "dead_end_avoidance": 1.0
+          },
+          "weights_used": {
+            "step_fidelity": 0.25,
+            "deviation_rate": 0.15,
+            "validation_pass_rate": 0.25,
+            "output_quality": 0.2,
+            "edge_case_coverage": 0.1,
+            "novel_situation_rate": 0.03,
+            "dead_end_avoidance": 0.02
+          }
+        },
+        "expected": {
+          "composite": 0.92,
+          "tolerance": 0.0001,
+          "components": {
+            "step_fidelity": 0.8,
+            "deviation_rate": 0.8,
+            "validation_pass_rate": 1.0,
+            "output_quality": 1.0,
+            "edge_case_coverage": 1.0,
+            "novel_situation_rate": 1.0,
+            "dead_end_avoidance": 1.0
+          }
+        },
+        "component_mismatches": []
+      },
+      "duration_ms": 12
+    },
+    {
+      "id": "l3-drift-self-mock-reference",
+      "level": "l3",
+      "kind": "drift_self",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "actual": {
+          "composite": 1.0,
+          "components": {
+            "step_fidelity": 1.0,
+            "deviation_rate": 1.0,
+            "validation_pass_rate": 1.0,
+            "output_quality": 1.0,
+            "edge_case_coverage": null,
+            "novel_situation_rate": 1.0,
+            "dead_end_avoidance": 1.0
+          },
+          "weights_used": {
+            "step_fidelity": 0.2778,
+            "deviation_rate": 0.1667,
+            "validation_pass_rate": 0.2778,
+            "output_quality": 0.2222,
+            "novel_situation_rate": 0.0333,
+            "dead_end_avoidance": 0.0222
+          }
+        },
+        "expected": {
+          "composite": 1.0,
+          "tolerance": 0.0001,
+          "components": {
+            "step_fidelity": 1.0,
+            "deviation_rate": 1.0,
+            "validation_pass_rate": 1.0,
+            "output_quality": 1.0,
+            "edge_case_coverage": null,
+            "novel_situation_rate": 1.0,
+            "dead_end_avoidance": 1.0
+          }
+        },
+        "component_mismatches": []
+      },
+      "duration_ms": 11
+    },
+    {
+      "id": "l3-provenance-reference-package",
+      "level": "l3",
+      "kind": "provenance",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "missing": []
+      },
+      "duration_ms": 27
+    },
+    {
+      "id": "l3-redaction-clean-reference",
+      "level": "l3",
+      "kind": "redaction",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "scan_passed": true,
+        "expected_passed": true,
+        "categories_found": [],
+        "expected_categories": [],
+        "total_findings": 0,
+        "policy_gate": {
+          "gate_passed": true,
+          "reason": "All policy checks passed",
+          "scans": {
+            "redaction": {
+              "status": "passed",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "manual",
+              "checker_version": "n/a"
+            },
+            "pii_scan": {
+              "status": "passed",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "secrets_scan": {
+              "status": "passed",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "client_identifier_scan": {
+              "status": "passed",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "regulated_content": {
+              "status": "passed",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            }
+          },
+          "has_classification": true,
+          "has_approval": false,
+          "approval_required": false
+        }
+      },
+      "duration_ms": 33
+    },
+    {
+      "id": "l3-redaction-client-identifier",
+      "level": "l3",
+      "kind": "redaction",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "scan_passed": false,
+        "expected_passed": false,
+        "categories_found": [
+          "client_identifier"
+        ],
+        "expected_categories": [
+          "client_identifier"
+        ],
+        "total_findings": 1,
+        "policy_gate": {
+          "gate_passed": false,
+          "reason": "Scans not run: redaction, pii_scan, secrets_scan, client_identifier_scan, regulated_content",
+          "scans": {
+            "redaction": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "pii_scan": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "secrets_scan": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "client_identifier_scan": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "regulated_content": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            }
+          },
+          "has_classification": true,
+          "has_approval": false,
+          "approval_required": false
+        }
+      },
+      "duration_ms": 4
+    },
+    {
+      "id": "l3-redaction-pii-email",
+      "level": "l3",
+      "kind": "redaction",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "scan_passed": false,
+        "expected_passed": false,
+        "categories_found": [
+          "pii"
+        ],
+        "expected_categories": [
+          "pii"
+        ],
+        "total_findings": 1,
+        "policy_gate": {
+          "gate_passed": false,
+          "reason": "Scans not run: redaction, pii_scan, secrets_scan, client_identifier_scan, regulated_content",
+          "scans": {
+            "redaction": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "pii_scan": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "secrets_scan": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "client_identifier_scan": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "regulated_content": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            }
+          },
+          "has_classification": true,
+          "has_approval": false,
+          "approval_required": false
+        }
+      },
+      "duration_ms": 3
+    },
+    {
+      "id": "l3-redaction-regulated-health",
+      "level": "l3",
+      "kind": "redaction",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "scan_passed": false,
+        "expected_passed": false,
+        "categories_found": [
+          "regulated_content"
+        ],
+        "expected_categories": [
+          "regulated_content"
+        ],
+        "total_findings": 1,
+        "policy_gate": {
+          "gate_passed": false,
+          "reason": "Scans not run: redaction, pii_scan, secrets_scan, client_identifier_scan, regulated_content",
+          "scans": {
+            "redaction": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "pii_scan": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "secrets_scan": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "client_identifier_scan": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "regulated_content": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            }
+          },
+          "has_classification": true,
+          "has_approval": false,
+          "approval_required": false
+        }
+      },
+      "duration_ms": 3
+    },
+    {
+      "id": "l3-redaction-secret-api-key",
+      "level": "l3",
+      "kind": "redaction",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "scan_passed": false,
+        "expected_passed": false,
+        "categories_found": [
+          "entropy",
+          "secret"
+        ],
+        "expected_categories": [
+          "secret"
+        ],
+        "total_findings": 2,
+        "policy_gate": {
+          "gate_passed": false,
+          "reason": "Scans not run: redaction, pii_scan, secrets_scan, client_identifier_scan, regulated_content",
+          "scans": {
+            "redaction": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "pii_scan": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "secrets_scan": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "client_identifier_scan": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            },
+            "regulated_content": {
+              "status": "not_run",
+              "findings_count": 0,
+              "has_evidence": false,
+              "checker": "unknown",
+              "checker_version": "unknown"
+            }
+          },
+          "has_classification": true,
+          "has_approval": false,
+          "approval_required": false
+        }
+      },
+      "duration_ms": 3
+    }
+  ],
+  "summary_hash": "sha256:382a57674a70ff2d026e5e69ebb94e7aa173cca0b9eb8aa98ed394805fa5df31"
+}

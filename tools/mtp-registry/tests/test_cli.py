@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
+import yaml
 from click.testing import CliRunner
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -30,6 +31,16 @@ def signing_env() -> dict[str, str]:
 
 
 class TestRegistryCli:
+    def test_init_and_validate_key_provider_manifest(self, runner: CliRunner, tmp_path: Path) -> None:
+        manifest_path = tmp_path / "key-provider.yaml"
+        init_result = runner.invoke(main, ["init-key-provider", str(manifest_path)])
+        assert init_result.exit_code == 0
+        assert manifest_path.exists()
+
+        validate_result = runner.invoke(main, ["validate-key-provider", str(manifest_path)])
+        assert validate_result.exit_code == 0
+        assert "VALID" in validate_result.output
+
     def test_init_registry(self, runner: CliRunner, tmp_path: Path) -> None:
         registry_dir = tmp_path / "registry"
         result = runner.invoke(main, ["init", str(registry_dir), "--name", "Test Registry"])
@@ -122,6 +133,64 @@ class TestRegistryCli:
                 "--key-file",
                 str(public_path),
             ],
+        )
+        assert verify_result.exit_code == 0
+        assert "VERIFIED" in verify_result.output
+
+    def test_sign_and_verify_local_kms(self, runner: CliRunner, tmp_path: Path) -> None:
+        manifest = {
+            "mtp_key_provider_version": "1.0",
+            "key_provider_manifest": {
+                "provider_id": "local-kms",
+                "keys": [
+                    {
+                        "key_id": "release-hmac",
+                        "profile": "hmac-sha256",
+                        "signing_key_env": "MTP_REGISTRY_SIGNING_KEY",
+                    }
+                ],
+            },
+        }
+        manifest_path = tmp_path / "key-provider.yaml"
+        manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
+        signature_path = tmp_path / "package.signature.yaml"
+        env = {"MTP_REGISTRY_SIGNING_KEY": "example-registry-shared-secret-v0.6"}
+
+        sign_result = runner.invoke(
+            main,
+            [
+                "sign",
+                str(PACKAGE_FILE),
+                "--provider",
+                "local-kms",
+                "--key-provider-manifest",
+                str(manifest_path),
+                "--key-id",
+                "release-hmac",
+                "--signer",
+                "release-bot",
+                "--output",
+                str(signature_path),
+            ],
+            env=env,
+        )
+        assert sign_result.exit_code == 0
+
+        verify_result = runner.invoke(
+            main,
+            [
+                "verify",
+                str(PACKAGE_FILE),
+                "--signature",
+                str(signature_path),
+                "--provider",
+                "local-kms",
+                "--key-provider-manifest",
+                str(manifest_path),
+                "--key-id",
+                "release-hmac",
+            ],
+            env=env,
         )
         assert verify_result.exit_code == 0
         assert "VERIFIED" in verify_result.output

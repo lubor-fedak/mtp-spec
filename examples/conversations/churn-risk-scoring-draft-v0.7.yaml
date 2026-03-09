@@ -270,7 +270,7 @@ policy:
     status: passed
     last_checked: '2026-03-09T22:12:35Z'
     checker: mtp-extract precheck
-    checker_version: 0.7.0
+    checker_version: 1.0.0
     report_hash: sha256:985ef3256a5c4103ac08da718765e8fcda7844005630931ab9577ead6d7310a5
   pii_scan:
     status: passed

@@ -1,0 +1,12 @@
+mtp_key_provider_version: "1.0"
+key_provider_manifest:
+  provider_id: local-kms
+  keys:
+    - key_id: release-hmac
+      profile: hmac-sha256
+      signing_key_env: MTP_REGISTRY_SIGNING_KEY
+      verification_key_env: MTP_REGISTRY_SIGNING_KEY
+    - key_id: release-ed25519
+      profile: ed25519
+      signing_key_env: MTP_REGISTRY_ED25519_PRIVATE_KEY
+      verification_key_env: MTP_REGISTRY_ED25519_PUBLIC_KEY

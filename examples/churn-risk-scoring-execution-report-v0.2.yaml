@@ -3,7 +3,7 @@ execution_report:
   mtp_package_version: "1.0.0"
   mtp_spec_version: "0.2"
   target_platform: "azure-openai-gpt-4o"
-  executor: "mtp-run v0.4.0"
+  executor: "mtp-run v1.0.0"
   timestamp: "2026-03-09T13:15:00Z"
   duration_seconds: 28.4
 

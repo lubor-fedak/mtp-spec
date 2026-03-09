@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mtp-lint"
-version = "0.3.2"
+version = "1.0.0"
 description = "Validator, redaction checker, and linter for MTP (Methodology Transfer Protocol) packages"
 readme = "README.md"
 license = "Apache-2.0"

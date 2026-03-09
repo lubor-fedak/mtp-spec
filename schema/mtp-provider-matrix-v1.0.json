@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lubor-fedak/mtp-spec/schema/mtp-provider-matrix-v1.0.json",
+  "title": "MTP Provider Certification Matrix v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["mtp_provider_matrix_version", "provider_matrix"],
+  "properties": {
+    "mtp_provider_matrix_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "provider_matrix": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generated_at", "benchmark_suite_id", "entries", "summary"],
+      "properties": {
+        "generated_at": { "type": "string", "format": "date-time" },
+        "benchmark_suite_id": { "type": "string", "minLength": 1 },
+        "benchmark_result_ref": { "type": "string", "minLength": 1 },
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["provider", "variant", "status"],
+            "properties": {
+              "provider": { "type": "string", "minLength": 1 },
+              "variant": { "type": "string", "minLength": 1 },
+              "model": { "type": "string" },
+              "status": {
+                "type": "string",
+                "enum": ["certified", "not_certified", "skipped", "not_evaluated"]
+              },
+              "benchmark_result_ref": { "type": "string" },
+              "certification_ref": { "type": "string" },
+              "available": { "type": "boolean" },
+              "executed": { "type": "boolean" },
+              "passed_thresholds": { "type": "boolean" },
+              "comparison_drift": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "state_agreement": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "overall_status": { "type": "string" }
+            }
+          }
+        },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["total", "certified", "not_certified", "skipped", "not_evaluated"],
+          "properties": {
+            "total": { "type": "integer", "minimum": 1 },
+            "certified": { "type": "integer", "minimum": 0 },
+            "not_certified": { "type": "integer", "minimum": 0 },
+            "skipped": { "type": "integer", "minimum": 0 },
+            "not_evaluated": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    }
+  }
+}

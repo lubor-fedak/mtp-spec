@@ -9,6 +9,7 @@ from typing import Any
 
 import yaml
 
+from mtp_run import __version__
 from mtp_run.drift import compare_reports, compute_report_drift
 
 # --- overall_status derivation (spec §7.2) ---
@@ -46,7 +47,7 @@ def build_execution_report(
     package: dict,
     raw_results: dict,
     duration_seconds: float,
-    executor_id: str = "mtp-run v0.4.0",
+    executor_id: str = f"mtp-run v{__version__}",
     quality_checks: list[dict] | None = None,
     baseline_ref: str | None = None,
     baseline_type: str | None = None,

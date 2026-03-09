@@ -440,7 +440,7 @@ execution_report:
   mtp_package_version: "1.0.0"
   mtp_spec_version: "0.2"
   target_platform: "azure-openai-gpt4o"
-  executor: "mtp-run v0.3 | manual | custom"
+  executor: "mtp-run v1.0 | manual | custom"
   timestamp: "2026-03-09T14:00:00Z"
   duration_seconds: 42
 
@@ -827,10 +827,10 @@ A valid benchmark must:
 | v0.4 | ✅ Runtime | `mtp-run` reference runtime CLI: step-by-step execution engine, LLM adapters (mock, Anthropic, OpenAI, Azure OpenAI), execution report generation with drift scoring, cross-report drift comparison |
 | v0.5 | ✅ Released | Formal conformance suite, fixture packs, release-gate runner, CI conformance reporting |
 | v0.6 | ✅ Released | Registry specification, package signatures, approval workflows |
-| v0.7 | ✅ Current | Extraction tooling, benchmark suites/results, adapter certification artifacts, stronger signing profiles |
-| v1.0 | Target | KMS-backed trust, enterprise reference architecture, provider-certified benchmark matrix, stable compatibility contract |
+| v0.7 | ✅ Released | Extraction tooling, benchmark suites/results, adapter certification artifacts, stronger signing profiles |
+| v1.0 | ✅ Current | Production toolchain `1.0.0`, compatibility contract, provider-certified benchmark matrix, local-KMS manifest, enterprise reference architecture |
 
-The `v0.6` trust layer is specified separately in [MTP-REGISTRY-v0.6.md](MTP-REGISTRY-v0.6.md) so that registry artifacts evolve independently from the stable `v0.2` package and execution-report schemas. `v0.7` builds on that with extraction and benchmark tooling rather than changing the core package/report contract.
+The `v0.6` trust layer is specified separately in [MTP-REGISTRY-v0.6.md](MTP-REGISTRY-v0.6.md) so that registry artifacts evolve independently from the stable `v0.2` package and execution-report schemas. `v1.0` adds release-level governance artifacts in [MTP-COMPATIBILITY-v1.0.md](MTP-COMPATIBILITY-v1.0.md) without changing the core package/report contract.
 
 ---
 

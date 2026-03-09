@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "mtp-benchmark"
+name = "mtp-release"
 version = "1.0.0"
-description = "Benchmark and adapter certification tooling for MTP"
+description = "Release contract and provider matrix tooling for MTP"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
@@ -16,14 +16,13 @@ dependencies = [
     "click>=8.0",
     "jsonschema>=4.20.0",
     "pyyaml>=6.0",
-    "mtp-run",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-cov>=5.0"]
 
 [project.scripts]
-mtp-benchmark = "mtp_benchmark.cli:main"
+mtp-release = "mtp_release.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/mtp_benchmark"]
+packages = ["src/mtp_release"]

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mtp-registry"
-version = "0.6.0"
+version = "1.0.0"
 description = "Registry, signing, and approval workflow tooling for MTP artifacts"
 readme = "README.md"
 license = "Apache-2.0"

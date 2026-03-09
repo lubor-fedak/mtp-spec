@@ -9,6 +9,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+from mtp_conformance import __version__
 from mtp_conformance.fixtures import FixtureManifest, discover_fixtures
 from mtp_lint.policy_gate import check_policy
 from mtp_lint.redaction_scanner import scan_all
@@ -118,7 +119,7 @@ def _run_package_validation(fixture: FixtureManifest) -> dict[str, Any]:
     passed = actual_valid == expected_valid
     return {
         "passed": passed,
-        "artifact": str(artifact_path),
+        "artifact": _display_path(artifact_path),
         "artifact_type": artifact_type,
         "version": version,
         "actual_valid": actual_valid,
@@ -149,7 +150,7 @@ def _run_execution_fixture(fixture: FixtureManifest) -> dict[str, Any]:
         package=package,
         raw_results=raw_results,
         duration_seconds=0.0,
-        executor_id="mtp-conformance v0.5.0",
+        executor_id=f"mtp-conformance v{__version__}",
         quality_checks=quality_checks,
     )
     report_errors = validate_execution_report(report)
@@ -387,7 +388,7 @@ def _run_registry_validation(fixture: FixtureManifest) -> dict[str, Any]:
     passed = actual_valid == expected_valid and type_matches
     return {
         "passed": passed,
-        "artifact": str(artifact_path),
+        "artifact": _display_path(artifact_path),
         "artifact_type": artifact_type,
         "expected_type": expected_type,
         "actual_valid": actual_valid,
@@ -409,6 +410,14 @@ def _required_path(fixture: FixtureManifest, key: str) -> Path:
     if path is None:
         raise ValueError(f"Fixture {fixture.id} missing required path '{key}'")
     return path
+
+
+def _display_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return str(resolved.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(resolved)
 
 
 def _approx_equal(actual: float, expected: float, tolerance: float) -> bool:

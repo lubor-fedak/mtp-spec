@@ -1,6 +1,6 @@
 # mtp-registry
 
-Registry, signing, and approval workflow tooling for MTP (v0.6).
+Registry, signing, approval, and key-provider workflow tooling for MTP `1.0`.
 
 ## Install
 
@@ -16,7 +16,10 @@ pip install -e "tools/mtp-registry[dev]"
 
 ## What It Does
 
-`mtp-registry` introduces the v0.6 trust layer on top of validated MTP v0.2 packages and execution reports. The trust model uses detached sidecar artifacts — existing packages and reports are never mutated.
+`mtp-registry` implements the stable `v0.6` trust layer plus the `v1.0`
+key-provider indirection surface on top of validated MTP `v0.2` packages and
+execution reports. The trust model uses detached sidecar artifacts — existing
+packages and reports are never mutated.
 
 Three sidecar artifact types:
 
@@ -60,6 +63,8 @@ These are bootstrap profiles for local and CI workflows. Future profiles can add
 | Command | Description |
 |---------|-------------|
 | `mtp-registry init <dir>` | Initialize a local registry directory structure |
+| `mtp-registry init-key-provider <file>` | Initialize an empty local-kms key provider manifest |
+| `mtp-registry validate-key-provider <file>` | Validate a local-kms key provider manifest |
 | `mtp-registry sign <artifact>` | Create a detached signature envelope |
 | `mtp-registry verify <artifact>` | Verify artifact against a signature envelope |
 | `mtp-registry approve <artifact>` | Create an approval record for a signed artifact |
@@ -86,6 +91,15 @@ mtp-registry sign package.yaml \
   --profile ed25519 \
   --key-file signer.pem \
   --key-id dev-key \
+  --signer release-bot
+
+# 2c. Or route key lookup through a local-kms manifest
+mtp-registry init-key-provider registry/key-provider.yaml
+# populate key ids and env refs, then:
+mtp-registry sign package.yaml \
+  --provider local-kms \
+  --key-provider-manifest registry/key-provider.yaml \
+  --key-id release-key \
   --signer release-bot
 
 # 3. Verify the signature
@@ -158,12 +172,15 @@ These validate the trust layer only. They do not replace `mtp-package-v0.2.json`
 
 ## Design Limits
 
-The v0.6 implementation is intentionally conservative:
+The registry artifact model is stable, but intentionally conservative:
 
 - Local filesystem registry only
 - HMAC-SHA256 and Ed25519 reference profiles only
+- local-kms indirection only (no cloud KMS adapters yet)
 - Detached approvals only
 - No multi-party quorum logic
-- No external KMS or certificate chain
+- No certificate chain or hardware-backed attestation
 
-These are v1.0 concerns. v0.6 defines the asset model and makes registry publication reproducible today.
+`v1.0` makes the trust layer production-usable through stable release artifacts
+and key-provider manifests, but deliberately avoids over-prescribing enterprise
+KMS integration details.

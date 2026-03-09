@@ -11,6 +11,11 @@ import click
 
 from mtp_registry import __version__
 from mtp_registry.artifacts import dump_yaml, load_artifact
+from mtp_registry.providers import (
+    init_key_provider_manifest,
+    resolve_key_material,
+    validate_key_provider_manifest,
+)
 from mtp_registry.workflows import (
     create_approval_record,
     create_signature_envelope,
@@ -38,26 +43,61 @@ def init(registry_dir: Path, name: str):
     click.echo(f"Initialized registry at {manifest_path}")
 
 
+@main.command(name="init-key-provider")
+@click.argument("manifest_file", type=click.Path(path_type=Path))
+def init_key_provider(manifest_file: Path):
+    """Initialize an empty local-kms key provider manifest."""
+    manifest_path = init_key_provider_manifest(manifest_file)
+    click.echo(f"Initialized key provider manifest at {manifest_path}")
+
+
+@main.command(name="validate-key-provider")
+@click.argument("manifest_file", type=click.Path(exists=True, path_type=Path))
+def validate_key_provider_cmd(manifest_file: Path):
+    """Validate a local-kms key provider manifest."""
+    errors = validate_key_provider_manifest(manifest_file)
+    if errors:
+        click.echo("INVALID")
+        for error in errors:
+            click.echo(f"- {error}")
+        sys.exit(1)
+    click.echo("VALID")
+
+
 @main.command()
 @click.argument("artifact_file", type=click.Path(exists=True, path_type=Path))
+@click.option("--provider", type=click.Choice(["direct", "local-kms"]), default="direct", show_default=True)
 @click.option("--profile", type=click.Choice(["hmac-sha256", "ed25519"]), default="hmac-sha256", show_default=True)
 @click.option("--key-env", default=None, help="Environment variable containing the signing key")
 @click.option("--key-file", type=click.Path(exists=True, path_type=Path), default=None, help="File containing the signing key")
+@click.option("--key-provider-manifest", type=click.Path(exists=True, path_type=Path), default=None, help="Manifest for the local-kms provider")
 @click.option("--key-id", required=True, help="Logical key identifier stored in the signature envelope")
 @click.option("--signer", "signer_id", required=True, help="Signer identifier")
 @click.option("--output", "-o", type=click.Path(path_type=Path), default=None, help="Output envelope file")
 def sign(
     artifact_file: Path,
+    provider: str,
     profile: str,
     key_env: str | None,
     key_file: Path | None,
+    key_provider_manifest: Path | None,
     key_id: str,
     signer_id: str,
     output: Path | None,
 ):
     """Create a detached signature envelope for a package or execution report."""
     try:
-        key, key_source = _load_key_material(key_env, key_file)
+        key, key_source, resolved_profile = resolve_key_material(
+            provider=provider,
+            key_env=key_env,
+            key_file=key_file,
+            profile=profile,
+            key_provider_manifest=key_provider_manifest,
+            key_id=key_id,
+            purpose="sign",
+        )
+        if key is None or key_source is None:
+            raise ValueError("Signing key material could not be resolved.")
     except Exception as exc:
         click.echo(f"Error: {exc}", err=True)
         sys.exit(2)
@@ -71,7 +111,7 @@ def sign(
             key_id=key_id,
             signer_id=signer_id,
             key_source=key_source,
-            profile=profile,
+            profile=resolved_profile or profile,
         )
     except Exception as exc:
         click.echo(f"Error: {exc}", err=True)
@@ -85,13 +125,34 @@ def sign(
 @main.command()
 @click.argument("artifact_file", type=click.Path(exists=True, path_type=Path))
 @click.option("--signature", "signature_file", required=True, type=click.Path(exists=True, path_type=Path))
+@click.option("--provider", type=click.Choice(["direct", "local-kms"]), default="direct", show_default=True)
 @click.option("--key-env", default=None, help="Environment variable containing the verification key or shared secret")
 @click.option("--key-file", type=click.Path(exists=True, path_type=Path), default=None, help="File containing the verification key or shared secret")
+@click.option("--key-provider-manifest", type=click.Path(exists=True, path_type=Path), default=None, help="Manifest for the local-kms provider")
+@click.option("--key-id", default=None, help="Key identifier for the local-kms provider")
 @click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text")
-def verify(artifact_file: Path, signature_file: Path, key_env: str | None, key_file: Path | None, output_format: str):
+def verify(
+    artifact_file: Path,
+    signature_file: Path,
+    provider: str,
+    key_env: str | None,
+    key_file: Path | None,
+    key_provider_manifest: Path | None,
+    key_id: str | None,
+    output_format: str,
+):
     """Verify a detached signature envelope against an artifact."""
     try:
-        key, _key_source = _load_key_material(key_env, key_file)
+        key, _key_source, _profile = resolve_key_material(
+            provider=provider,
+            key_env=key_env,
+            key_file=key_file,
+            key_provider_manifest=key_provider_manifest,
+            key_id=key_id,
+            purpose="verify",
+        )
+        if key is None:
+            raise ValueError("Verification key material could not be resolved.")
     except Exception as exc:
         click.echo(f"Error: {exc}", err=True)
         sys.exit(2)
@@ -172,8 +233,11 @@ def approve(
 @click.argument("artifact_file", type=click.Path(exists=True, path_type=Path))
 @click.option("--registry-dir", required=True, type=click.Path(exists=True, file_okay=False, path_type=Path))
 @click.option("--signature", "signature_file", required=True, type=click.Path(exists=True, path_type=Path))
+@click.option("--provider", type=click.Choice(["direct", "local-kms"]), default="direct", show_default=True)
 @click.option("--key-env", default=None, help="Optional environment variable for cryptographic verification during publish")
 @click.option("--key-file", type=click.Path(exists=True, path_type=Path), default=None, help="Optional file containing verification key material")
+@click.option("--key-provider-manifest", type=click.Path(exists=True, path_type=Path), default=None, help="Manifest for the local-kms provider")
+@click.option("--key-id", default=None, help="Key identifier for the local-kms provider")
 @click.option("--approval", "approval_files", multiple=True, type=click.Path(exists=True, path_type=Path))
 @click.option("--status", type=click.Choice(["draft", "review", "approved", "deprecated"]), required=True)
 @click.option("--channel", default="internal", show_default=True)
@@ -186,8 +250,11 @@ def publish(
     artifact_file: Path,
     registry_dir: Path,
     signature_file: Path,
+    provider: str,
     key_env: str | None,
     key_file: Path | None,
+    key_provider_manifest: Path | None,
+    key_id: str | None,
     approval_files: tuple[Path, ...],
     status: str,
     channel: str,
@@ -202,7 +269,14 @@ def publish(
     signature = load_artifact(signature_file)
     approvals = [load_artifact(path) for path in approval_files]
     try:
-        signing_key, _key_source = _load_key_material(key_env, key_file, optional=True)
+        signing_key, _key_source, _profile = resolve_key_material(
+            provider=provider,
+            key_env=key_env,
+            key_file=key_file,
+            key_provider_manifest=key_provider_manifest,
+            key_id=key_id,
+            purpose="verify",
+        ) if any([key_env, key_file, key_provider_manifest]) else (None, None, None)
     except Exception as exc:
         click.echo(f"Error: {exc}", err=True)
         sys.exit(2)
@@ -261,13 +335,32 @@ def list_cmd(registry_dir: Path, status: str | None, channel: str | None, output
 @main.command(name="check-entry")
 @click.argument("entry_file", type=click.Path(exists=True, path_type=Path))
 @click.option("--registry-dir", required=True, type=click.Path(exists=True, file_okay=False, path_type=Path))
+@click.option("--provider", type=click.Choice(["direct", "local-kms"]), default="direct", show_default=True)
 @click.option("--key-env", default=None, help="Optional environment variable for cryptographic signature verification")
 @click.option("--key-file", type=click.Path(exists=True, path_type=Path), default=None, help="Optional file containing verification key material")
+@click.option("--key-provider-manifest", type=click.Path(exists=True, path_type=Path), default=None, help="Manifest for the local-kms provider")
+@click.option("--key-id", default=None, help="Key identifier for the local-kms provider")
 @click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text")
-def check_entry(entry_file: Path, registry_dir: Path, key_env: str | None, key_file: Path | None, output_format: str):
+def check_entry(
+    entry_file: Path,
+    registry_dir: Path,
+    provider: str,
+    key_env: str | None,
+    key_file: Path | None,
+    key_provider_manifest: Path | None,
+    key_id: str | None,
+    output_format: str,
+):
     """Validate a registry entry and all referenced trust artifacts."""
     try:
-        key, _key_source = _load_key_material(key_env, key_file, optional=True)
+        key, _key_source, _profile = resolve_key_material(
+            provider=provider,
+            key_env=key_env,
+            key_file=key_file,
+            key_provider_manifest=key_provider_manifest,
+            key_id=key_id,
+            purpose="verify",
+        ) if any([key_env, key_file, key_provider_manifest]) else (None, None, None)
     except Exception as exc:
         click.echo(f"Error: {exc}", err=True)
         sys.exit(2)
@@ -292,25 +385,6 @@ def check_entry(entry_file: Path, registry_dir: Path, key_env: str | None, key_f
         click.echo(f"approvals_checked: {len(result['approval_results'])}")
 
     sys.exit(0 if result["verified"] else 1)
-
-
-def _load_key_material(
-    key_env: str | None,
-    key_file: Path | None,
-    optional: bool = False,
-) -> tuple[str | None, str | None]:
-    if key_env and key_file:
-        raise ValueError("Use either --key-env or --key-file, not both.")
-    if key_env:
-        value = os.environ.get(key_env)
-        if value is None:
-            raise ValueError(f"Environment variable '{key_env}' is not set.")
-        return value, f"env:{key_env}"
-    if key_file:
-        return key_file.read_text(encoding="utf-8"), f"file:{key_file}"
-    if optional:
-        return None, None
-    raise ValueError("One of --key-env or --key-file is required.")
 
 
 if __name__ == "__main__":

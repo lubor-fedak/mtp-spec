@@ -123,16 +123,36 @@ mtp-registry sign your-package.yaml --profile ed25519 --key-file signer.pem --ke
 
 This adds detached trust artifacts on top of validated MTP packages and reports: signatures, approvals, and publishable registry entries.
 
+### 8. Build release artifacts
+
+```bash
+cd tools/mtp-release && pip install -e .
+mtp-release matrix \
+  --benchmark-result examples/benchmarks/churn-risk-benchmark-result-v0.7.yaml \
+  --certification examples/benchmarks/mock-adapter-certification-v0.7.yaml \
+  -o /tmp/mtp-provider-matrix-v1.0.yaml
+
+mtp-release contract \
+  --release-version 1.0.0 \
+  --provider-matrix /tmp/mtp-provider-matrix-v1.0.yaml \
+  --conformance-level all \
+  --architecture-ref docs/enterprise-reference-architecture-v1.0.md \
+  -o /tmp/mtp-compatibility-contract-v1.0.yaml
+```
+
+This produces the production `v1.0` release artifacts: provider certification matrix plus compatibility contract.
+
 ## Versioning
 
-MTP uses **two independent version tracks**:
+MTP uses **three independent version tracks**:
 
 | Track | Current | What it covers |
 |-------|---------|----------------|
-| **Spec version** | v0.2.1 | Package format, execution semantics, provenance, redaction, drift — the normative protocol definition |
-| **Tooling version** | v0.7.0 | CLI tools built on top of the stable spec: `mtp-lint`, `mtp-run`, `mtp-conformance`, `mtp-registry`, `mtp-extract`, `mtp-benchmark` |
+| **Core spec** | v0.2.1 | Package format, execution semantics, provenance, redaction, drift |
+| **Extension schemas** | v0.6 / v0.7 / v1.0 | Registry trust artifacts, benchmark artifacts, release artifacts |
+| **Toolchain release** | v1.0.0 | Production CLI toolchain: `mtp-lint`, `mtp-run`, `mtp-conformance`, `mtp-registry`, `mtp-extract`, `mtp-benchmark`, `mtp-release` |
 
-The spec version (currently `0.2`) defines the wire format — `mtp_version: "0.2"` in every package and execution report. Tooling versions (`0.3`–`0.7`) add capabilities **on top of** the stable spec without changing the core format. Registry schemas use `v0.6`, benchmark schemas use `v0.7` — these are additive extensions, not replacements.
+The core wire format stays stable on `mtp_version: "0.2"` for packages and `mtp_spec_version: "0.2"` for execution reports. `v1.0.0` is the production release of the surrounding toolchain and governance surface, not a breaking change to the core package/report contract.
 
 The spec version will increment to `v0.3` only when the core package or execution report format changes.
 
@@ -141,6 +161,10 @@ The spec version will increment to `v0.3` only when the core package or executio
 **[MTP Specification v0.2](spec/MTP-SPEC-v0.2.md)** — Full specification: lifecycle, package format, provenance, execution semantics, redaction discipline, drift measurement, conformance levels, and benchmark framework. Current patch: **0.2.1**.
 
 **[MTP Registry Extension v0.6](spec/MTP-REGISTRY-v0.6.md)** — Registry layout, detached signature envelopes, approval records, registry entries, and local trust workflow.
+
+**[MTP Compatibility Contract v1.0](spec/MTP-COMPATIBILITY-v1.0.md)** — Production release contract, provider matrix semantics, stable compatibility promises, and key-provider indirection.
+
+**[Enterprise Reference Architecture v1.0](docs/enterprise-reference-architecture-v1.0.md)** — Reference deployment topology for extraction, validation, release, registry publication, and enterprise execution.
 
 **[MTP Specification v0.1](spec/MTP-SPEC-v0.1.md)** — Original draft (superseded by v0.2).
 
@@ -159,13 +183,16 @@ MTP provides JSON Schemas (Draft 2020-12) for machine validation of all artifact
 | [mtp-benchmark-suite-v0.7.json](schema/mtp-benchmark-suite-v0.7.json) | Benchmark suites | Adapter benchmark inputs: package, baseline, thresholds |
 | [mtp-benchmark-result-v0.7.json](schema/mtp-benchmark-result-v0.7.json) | Benchmark results | Drift and availability results across adapters |
 | [mtp-adapter-certification-v0.7.json](schema/mtp-adapter-certification-v0.7.json) | Adapter certifications | Benchmark-derived certification status for an adapter |
+| [mtp-provider-matrix-v1.0.json](schema/mtp-provider-matrix-v1.0.json) | Provider certification matrices | Release-level support status derived from benchmark evidence |
+| [mtp-compatibility-contract-v1.0.json](schema/mtp-compatibility-contract-v1.0.json) | Compatibility contracts | Stable release contract for production MTP distributions |
+| [mtp-key-provider-manifest-v1.0.json](schema/mtp-key-provider-manifest-v1.0.json) | Key provider manifests | Local-KMS style indirection for registry signing and verification |
 | [mtp-package-v0.1.json](schema/mtp-package-v0.1.json) | Legacy v0.1 packages | Permissive: backward compatibility |
 
 v0.1 packages are correctly rejected by the v0.2 schema. Use the v0.1 schema for legacy packages.
 
 ## Tooling
 
-### mtp-lint (v0.3)
+### mtp-lint (v1.0)
 
 Validator, redaction checker, completeness scorer, and enterprise policy gate. See [tools/mtp-lint/README.md](tools/mtp-lint/README.md) for full usage.
 
@@ -182,7 +209,7 @@ cd tools/mtp-lint && pip install -e .
 
 All commands support `--format json` for machine-readable output with report hash. `check` exits with code 1 on schema errors, redaction findings, or policy gate failure.
 
-### mtp-run (v0.4)
+### mtp-run (v1.0)
 
 Reference runtime for executing MTP packages through LLM adapters. See [tools/mtp-run/README.md](tools/mtp-run/README.md) for full usage.
 
@@ -201,7 +228,7 @@ cd tools/mtp-run && pip install -e ".[all]"    # all adapters (Claude, OpenAI, A
 
 Supported adapters: `mock` (deterministic, no API keys), `anthropic` (Claude), `openai` (GPT-4o), `openai --azure` (Azure OpenAI).
 
-### mtp-conformance (v0.5)
+### mtp-conformance (v1.0)
 
 Reference conformance suite and release-gate runner. See [tools/mtp-conformance/README.md](tools/mtp-conformance/README.md) for full usage.
 
@@ -218,7 +245,7 @@ cd tools/mtp-conformance && pip install -e .
 
 Fixture corpus lives in [conformance/fixtures/README.md](conformance/fixtures/README.md). CI runs the conformance suite automatically as a release gate.
 
-### mtp-registry (v0.6)
+### mtp-registry (v1.0)
 
 Registry, signing, and approval workflow tooling. See [tools/mtp-registry/README.md](tools/mtp-registry/README.md) for full usage.
 
@@ -235,7 +262,7 @@ cd tools/mtp-registry && pip install -e .
 | `mtp-registry publish <artifact>` | Copy artifact and trust sidecars into a registry and generate a registry entry |
 | `mtp-registry check-entry <entry>` | Verify a published registry entry plus all referenced trust artifacts |
 
-### mtp-extract (v0.7)
+### mtp-extract (v1.0)
 
 Conversation-to-package extraction tool. See [tools/mtp-extract/README.md](tools/mtp-extract/README.md) for full usage.
 
@@ -250,7 +277,7 @@ cd tools/mtp-extract && pip install -e .
 | `mtp-extract map <package>` | Emit a provenance map for steps, edge cases, and dead ends |
 | `mtp-extract merge <base> <overlay>` | Merge two MTP packages into one updated draft |
 
-### mtp-benchmark (v0.7)
+### mtp-benchmark (v1.0)
 
 Benchmark runner and adapter certification tooling. See [tools/mtp-benchmark/README.md](tools/mtp-benchmark/README.md) for full usage.
 
@@ -264,6 +291,20 @@ cd tools/mtp-benchmark && pip install -e .
 | `mtp-benchmark run <suite>` | Execute a benchmark suite and compare adapter results against a baseline report |
 | `mtp-benchmark certify <result> --adapter <name>` | Generate an adapter certification artifact from benchmark output |
 
+### mtp-release (v1.0)
+
+Release-contract tooling. See [tools/mtp-release/README.md](tools/mtp-release/README.md) for full usage.
+
+```bash
+cd tools/mtp-release && pip install -e .
+```
+
+| Command | What it does |
+|---------|-------------|
+| `mtp-release validate <artifact>` | Validate a provider matrix or compatibility contract |
+| `mtp-release matrix --benchmark-result <file>` | Build a `v1.0` provider certification matrix |
+| `mtp-release contract --provider-matrix <file>` | Build a `v1.0` compatibility contract |
+
 ## Examples
 
 | File | Type | Description |
@@ -276,7 +317,11 @@ cd tools/mtp-benchmark && pip install -e .
 | [churn-risk-benchmark-suite-v0.7.yaml](examples/benchmarks/churn-risk-benchmark-suite-v0.7.yaml) | Benchmark Suite | Adapter benchmark definition against the churn-risk baseline |
 | [churn-risk-benchmark-result-v0.7.yaml](examples/benchmarks/churn-risk-benchmark-result-v0.7.yaml) | Benchmark Result | Benchmark output: mock executed, real adapters skipped when unavailable |
 | [mock-adapter-certification-v0.7.yaml](examples/benchmarks/mock-adapter-certification-v0.7.yaml) | Adapter Certification | Certification artifact derived from the benchmark result for the mock adapter |
+| [mtp-provider-matrix-v1.0.yaml](examples/releases/mtp-provider-matrix-v1.0.yaml) | Provider Matrix | Release support matrix derived from benchmark evidence |
+| [mtp-compatibility-contract-v1.0.yaml](examples/releases/mtp-compatibility-contract-v1.0.yaml) | Compatibility Contract | Production release contract for MTP `1.0.0` |
+| [mtp-conformance-summary-v1.0.json](examples/releases/mtp-conformance-summary-v1.0.json) | Conformance Snapshot | `mtp-conformance` release-gate evidence snapshot |
 | [registry.yaml](examples/registry/registry.yaml) | Registry Manifest (v0.6) | Reference local registry initialized by `mtp-registry` |
+| [local-kms-key-provider-v1.0.yaml](examples/registry/local-kms-key-provider-v1.0.yaml) | Key Provider Manifest | Reference local-KMS indirection manifest for `mtp-registry` |
 | [customer-churn-risk-scoring-1.0.0.registry-entry.yaml](examples/registry/entries/customer-churn-risk-scoring-1.0.0.registry-entry.yaml) | Registry Entry (v0.6) | Published registry entry for the churn scoring package with signature and approval refs |
 | [test-data-churn.csv](examples/test-data-churn.csv) | Test Data | Sample data for running the churn scoring package |
 | [valuation-report-extraction.yaml](examples/valuation-report-extraction.yaml) | Package (v0.1) | Document processing methodology (v0.1 format) |
@@ -287,6 +332,7 @@ mtp-extract draft examples/conversations/churn-risk-scoring-session.md --prechec
 mtp-lint check examples/churn-risk-scoring-v0.2.yaml
 mtp-run exec examples/churn-risk-scoring-v0.2.yaml --data examples/test-data-churn.csv --adapter mock
 mtp-benchmark validate examples/benchmarks/churn-risk-benchmark-result-v0.7.yaml
+mtp-release validate examples/releases/mtp-provider-matrix-v1.0.yaml
 MTP_REGISTRY_SIGNING_KEY=mtp-example-registry-key-v0.6 mtp-registry check-entry examples/registry/entries/customer-churn-risk-scoring-1.0.0.registry-entry.yaml --registry-dir examples/registry --key-env MTP_REGISTRY_SIGNING_KEY
 ```
 
@@ -296,12 +342,12 @@ MTP_REGISTRY_SIGNING_KEY=mtp-example-registry-key-v0.6 mtp-registry check-entry 
 |---------|--------|-------|
 | v0.1 | ✅ Released | YAML format, manual extraction/application, JSON Schema |
 | v0.2.x | ✅ Released | Lifecycle, provenance, execution semantics, redaction, drift, conformance. Patch: 0.2.1 |
-| v0.3.x | ✅ Released | `mtp-lint` CLI: schema validator, redaction scanner (6 categories), completeness scorer, policy gate. Patch: 0.3.2 |
-| v0.4 | ✅ Released | `mtp-run` reference runtime CLI: execution engine, adapters (mock, Anthropic, OpenAI, Azure), drift comparison |
-| v0.5 | ✅ Released | `mtp-conformance` fixture runner, L1/L2/L3 fixture packs, release-gate summaries, CI conformance reporting |
-| v0.6 | ✅ Released | `mtp-registry` CLI, registry schemas, detached signature envelopes, approval records, local registry publication workflow |
-| v0.7 | ✅ Current | `mtp-extract`, `mtp-benchmark`, adapter certification artifacts, extracted draft examples, Ed25519 registry signing profile |
-| v1.0 | Target | KMS-backed trust, enterprise reference architecture, provider-certified benchmark matrix, stable compatibility contract |
+| v0.3.x | ✅ Released | `mtp-lint` CLI: schema validator, redaction scanner, completeness scorer, policy gate |
+| v0.4 | ✅ Released | `mtp-run` reference runtime CLI: execution engine, adapters, drift comparison |
+| v0.5 | ✅ Released | `mtp-conformance` fixture runner, fixture packs, release-gate summaries, CI conformance reporting |
+| v0.6 | ✅ Released | `mtp-registry` schemas, detached signature envelopes, approval records, local registry publication workflow |
+| v0.7 | ✅ Released | `mtp-extract`, `mtp-benchmark`, adapter certification artifacts, extracted draft examples, stronger signing profiles |
+| v1.0 | ✅ Current | Production toolchain `1.0.0`, compatibility contract, provider matrix, local-KMS manifest, enterprise reference architecture |
 
 ## Contributing
 

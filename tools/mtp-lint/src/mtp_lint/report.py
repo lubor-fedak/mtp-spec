@@ -7,6 +7,8 @@ import hashlib
 from datetime import datetime, timezone
 from typing import Any
 
+from mtp_lint import __version__
+
 
 def generate_report(
     file_path: str,
@@ -37,7 +39,7 @@ def generate_report(
         overall = "pass"
 
     report = {
-        "mtp_lint_version": "0.3.2",
+        "mtp_lint_version": __version__,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "file": file_path,
         "artifact_type": artifact_type,

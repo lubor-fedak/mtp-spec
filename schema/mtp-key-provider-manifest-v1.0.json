@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lubor-fedak/mtp-spec/schema/mtp-key-provider-manifest-v1.0.json",
+  "title": "MTP Key Provider Manifest v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["mtp_key_provider_version", "key_provider_manifest"],
+  "properties": {
+    "mtp_key_provider_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "key_provider_manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider_id", "keys"],
+      "properties": {
+        "provider_id": {
+          "type": "string",
+          "const": "local-kms"
+        },
+        "keys": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["key_id", "profile"],
+            "properties": {
+              "key_id": { "type": "string", "minLength": 1 },
+              "profile": { "type": "string", "enum": ["hmac-sha256", "ed25519"] },
+              "signing_key_env": { "type": "string" },
+              "signing_key_ref": { "type": "string" },
+              "verification_key_env": { "type": "string" },
+              "verification_key_ref": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

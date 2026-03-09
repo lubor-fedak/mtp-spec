@@ -2,6 +2,30 @@
 
 All notable changes to the MTP specification are documented in this file.
 
+## [1.0.0] — 2026-03-09
+
+### Production release surface
+- Added `tools/mtp-release/` for generating and validating provider matrices and compatibility contracts
+- Added `spec/MTP-COMPATIBILITY-v1.0.md`
+- Added `docs/enterprise-reference-architecture-v1.0.md`
+- Added release examples under `examples/releases/`
+
+### Trust hardening
+- Added `mtp-key-provider-manifest-v1.0.json`
+- Added `local-kms` key-provider manifest workflow to `mtp-registry`
+- Added reference key-provider manifest under `examples/registry/`
+
+### Release artifacts
+- Added `mtp-provider-matrix-v1.0.json`
+- Added `mtp-compatibility-contract-v1.0.json`
+- Published reference `v1.0` provider matrix, compatibility contract, and conformance snapshot
+
+### Toolchain stabilization
+- Aligned all CLI tool package versions to `1.0.0`
+- Normalized generated executor/checker metadata to the `1.0.0` toolchain
+- CI now validates `mtp-release` and the `v1.0` release artifacts
+- README roadmap now marks `v1.0` as the current production release
+
 ## [0.7.0] — 2026-03-09
 
 ### Extraction and benchmark layer

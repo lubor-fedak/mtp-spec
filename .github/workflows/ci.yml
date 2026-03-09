@@ -96,6 +96,42 @@ jobs:
             --output-dir /tmp/mtp-benchmark
           mtp-benchmark validate /tmp/mtp-benchmark/churn-risk-benchmark-result-v0.7.yaml
 
+  mtp-release:
+    name: mtp-release tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install tools
+        run: |
+          pip install -e tools/mtp-lint
+          pip install -e tools/mtp-run
+          pip install -e tools/mtp-registry
+          pip install -e tools/mtp-conformance
+          pip install -e tools/mtp-benchmark
+          pip install -e "tools/mtp-release[dev]"
+      - name: Run tests
+        run: pytest tools/mtp-release/tests/ -v --tb=short
+      - name: Build release artifacts
+        run: |
+          mtp-release matrix \
+            --benchmark-result examples/benchmarks/churn-risk-benchmark-result-v0.7.yaml \
+            --certification examples/benchmarks/mock-adapter-certification-v0.7.yaml \
+            --output /tmp/mtp-release/mtp-provider-matrix-v1.0.yaml
+          mtp-release validate /tmp/mtp-release/mtp-provider-matrix-v1.0.yaml
+          mtp-release contract \
+            --release-version 1.0.0 \
+            --provider-matrix /tmp/mtp-release/mtp-provider-matrix-v1.0.yaml \
+            --conformance-level all \
+            --architecture-ref docs/enterprise-reference-architecture-v1.0.md \
+            --output /tmp/mtp-release/mtp-compatibility-contract-v1.0.yaml
+          mtp-release validate /tmp/mtp-release/mtp-compatibility-contract-v1.0.yaml
+
   mtp-conformance:
     name: mtp-conformance tests
     runs-on: ubuntu-latest
@@ -178,6 +214,8 @@ jobs:
           pip install -e tools/mtp-run
           pip install -e tools/mtp-extract
           pip install -e tools/mtp-benchmark
+          pip install -e tools/mtp-registry
+          pip install -e tools/mtp-release
       - name: Validate all examples
         run: |
           mtp-lint validate examples/churn-risk-scoring-v0.2.yaml
@@ -188,3 +226,6 @@ jobs:
           mtp-benchmark validate examples/benchmarks/churn-risk-benchmark-suite-v0.7.yaml
           mtp-benchmark validate examples/benchmarks/churn-risk-benchmark-result-v0.7.yaml
           mtp-benchmark validate examples/benchmarks/mock-adapter-certification-v0.7.yaml
+          mtp-registry validate-key-provider examples/registry/local-kms-key-provider-v1.0.yaml
+          mtp-release validate examples/releases/mtp-provider-matrix-v1.0.yaml
+          mtp-release validate examples/releases/mtp-compatibility-contract-v1.0.yaml

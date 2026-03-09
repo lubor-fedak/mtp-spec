@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mtp-conformance"
-version = "0.5.0"
+version = "1.0.0"
 description = "Conformance runner for MTP (Methodology Transfer Protocol) tooling and fixtures"
 readme = "README.md"
 license = "Apache-2.0"

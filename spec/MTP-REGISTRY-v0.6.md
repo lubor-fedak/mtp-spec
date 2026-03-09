@@ -44,15 +44,15 @@ cryptographic signature verification at publish time.
 
 ### 2.2 Reference Signature Profiles
 
-The reference `v0.6` implementation now supports two profiles:
+The reference `v0.6` implementation supports two profiles:
 
 - `profile`: `hmac-sha256` — pragmatic bootstrap for local and CI workflows
 - `profile`: `ed25519` — detached asymmetric signing for stronger distribution and verification workflows
 - `canonicalization`: `json-sorted-v1`
 
-These profiles are still reference-grade, not the final trust model for large
-enterprises. Future profiles can add KMS-backed signing without changing
-registry entry semantics.
+These profiles remain intentionally simple. `v1.0` adds a stable key-provider
+manifest so signing workflows can resolve keys through a local-KMS abstraction
+without changing registry entry semantics.
 
 ### 2.3 Approval Semantics
 
@@ -185,4 +185,5 @@ The reference `v0.6` implementation is intentionally conservative:
 - no external KMS or certificate chain
 
 Those remain `v1.0` concerns. `v0.6` exists to define the asset model and make
-registry publication reproducible today.
+registry publication reproducible today. Production release semantics are
+specified separately in [MTP-COMPATIBILITY-v1.0.md](MTP-COMPATIBILITY-v1.0.md).

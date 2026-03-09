@@ -3,7 +3,7 @@ execution_report:
   mtp_package_version: 1.0.0
   mtp_spec_version: '0.2'
   target_platform: mock-adapter-v0.4
-  executor: mtp-benchmark v0.7.0
+  executor: mtp-benchmark v1.0.0
   timestamp: '2026-03-09T22:22:32.332414+00:00'
   duration_seconds: 0.0
   overall_status: success

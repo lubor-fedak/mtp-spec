@@ -1,0 +1,38 @@
+mtp_provider_matrix_version: '1.0'
+provider_matrix:
+  generated_at: '2026-03-09T23:00:15Z'
+  benchmark_suite_id: churn-risk-benchmark
+  benchmark_result_ref: examples/benchmarks/churn-risk-benchmark-result-v0.7.yaml
+  entries:
+  - provider: mock
+    variant: default
+    status: certified
+    benchmark_result_ref: examples/benchmarks/churn-risk-benchmark-result-v0.7.yaml
+    model: deterministic
+    certification_ref: examples/benchmarks/mock-adapter-certification-v0.7.yaml
+    available: true
+    executed: true
+    passed_thresholds: true
+    comparison_drift: 1.0
+    state_agreement: 1.0
+    overall_status: success
+  - provider: anthropic
+    variant: default
+    status: not_evaluated
+    benchmark_result_ref: examples/benchmarks/churn-risk-benchmark-result-v0.7.yaml
+    model: claude-sonnet-4-20250514
+    available: false
+    executed: false
+  - provider: openai
+    variant: default
+    status: not_evaluated
+    benchmark_result_ref: examples/benchmarks/churn-risk-benchmark-result-v0.7.yaml
+    model: gpt-4o
+    available: false
+    executed: false
+  summary:
+    total: 3
+    certified: 1
+    not_certified: 0
+    skipped: 0
+    not_evaluated: 2
