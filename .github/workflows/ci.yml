@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  mtp-lint:
+    name: mtp-lint tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install mtp-lint
+        run: |
+          cd tools/mtp-lint
+          pip install -e ".[dev]"
+      - name: Run tests
+        run: |
+          cd tools/mtp-lint
+          pytest tests/ -v --tb=short
+      - name: Validate example package
+        run: mtp-lint check examples/churn-risk-scoring-v0.2.yaml --format json
+
+  mtp-run:
+    name: mtp-run tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install mtp-run
+        run: |
+          cd tools/mtp-run
+          pip install -e ".[dev]"
+      - name: Run tests
+        run: |
+          cd tools/mtp-run
+          pytest tests/ -v --tb=short
+      - name: Execute mock run
+        run: |
+          mtp-run exec examples/churn-risk-scoring-v0.2.yaml \
+            --data examples/test-data-churn.csv \
+            --adapter mock -q --format json > /dev/null
+
+  schema-validation:
+    name: Schema validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install tools
+        run: |
+          cd tools/mtp-lint && pip install -e .
+          cd ../mtp-run && pip install -e .
+      - name: Validate all examples
+        run: |
+          mtp-lint validate examples/churn-risk-scoring-v0.2.yaml
+          mtp-lint validate examples/valuation-report-extraction.yaml
+          mtp-lint validate examples/churn-risk-scoring-execution-report-v0.2.yaml
+          mtp-lint validate examples/churn-risk-scoring-mock-execution-report-v0.2.yaml

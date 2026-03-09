@@ -10,7 +10,7 @@ import click
 
 from mtp_run import __version__
 from mtp_run.adapters import get_adapter, list_adapter_statuses
-from mtp_run.drift import compare_reports
+from mtp_run.drift import compare_reports, compute_report_drift
 from mtp_run.executor import execute_package
 from mtp_run.io_utils import dump_yaml, load_artifact, validate_execution_report, validate_package
 from mtp_run.report_builder import build_execution_report
@@ -212,11 +212,56 @@ def exec_cmd(package_file: str, data_file: str | None, adapter_name: str,
 
 
 @main.command()
+@click.argument("report_file", type=click.Path(exists=True))
+@click.option("--format", "fmt", type=click.Choice(["text", "json"]), default="text")
+def score(report_file: str, fmt: str):
+    """Compute weighted drift score for a single execution report (spec §8.3)."""
+    try:
+        report = load_artifact(report_file)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(2)
+
+    if "execution_report" not in report:
+        click.echo("Error: file must be an MTP execution report.", err=True)
+        sys.exit(2)
+
+    errors = validate_execution_report(report)
+    if errors:
+        click.echo("Error: report is not schema-valid:", err=True)
+        for error in errors:
+            click.echo(f"  - {error}", err=True)
+        sys.exit(1)
+
+    drift_result = compute_report_drift(report)
+
+    if fmt == "json":
+        click.echo(json.dumps(drift_result, indent=2))
+    else:
+        click.echo("Drift Score (self)")
+        click.echo(f"{'=' * 50}")
+        click.echo(f"Report:    {report_file}")
+        er = report["execution_report"]
+        click.echo(f"Platform:  {er.get('target_platform', 'unknown')}")
+        click.echo(f"Status:    {er.get('overall_status', 'unknown')}")
+        click.echo(f"Composite: {drift_result['composite']:.4f}")
+        click.echo("")
+        click.echo("Components:")
+        for name, value in drift_result["components"].items():
+            weight = drift_result["weights_used"].get(name)
+            if value is None:
+                click.echo(f"  {name:25s} —  (excluded, no data)")
+            else:
+                w_str = f"  weight {weight:.4f}" if weight is not None else ""
+                click.echo(f"  {name:25s} {value:.4f}{w_str}")
+
+    sys.exit(0)
+
+
+@main.command()
 def adapters():
     """List available adapters and their status."""
     statuses = list_adapter_statuses()
-
-
     click.echo("Available adapters:")
     click.echo("")
     for item in statuses:

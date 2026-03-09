@@ -26,6 +26,9 @@ dependencies = [
     "click>=8.0",
 ]
 
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-cov>=5.0"]
+
 [project.scripts]
 mtp-lint = "mtp_lint.cli:main"
 

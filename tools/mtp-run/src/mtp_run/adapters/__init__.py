@@ -12,7 +12,7 @@ from typing import Any
 @dataclass
 class StepResult:
     """Structured result from executing a single MTP step."""
-    state: str  # success | partial | deviation | failure | escalated
+    state: str  # success | partial | deviation | failure | escalated | skipped
     validation_result: str  # pass | fail | not_applicable
     output: str  # the actual output/work product of the step
     deviation_description: str = ""
