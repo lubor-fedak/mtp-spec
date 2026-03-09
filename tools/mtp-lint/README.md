@@ -57,6 +57,8 @@ mtp-lint score examples/churn-risk-scoring-v0.2.yaml
 
 | Code | Meaning |
 |------|---------|
-| 0 | All checks passed |
-| 1 | Errors found (or warnings in `--strict` mode) |
-| 2 | Input error (file not found, invalid format) |
+| 0 | All checks passed (or warnings only) |
+| 1 | Errors found: schema invalid, redaction findings, or policy gate failed |
+| 2 | Input error (file not found, invalid format, wrong artifact type) |
+
+Note: Policy gate failure is an error (exit 1), not a warning. Use `--strict` to also exit 1 on warnings (e.g., low completeness).

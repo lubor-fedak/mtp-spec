@@ -71,8 +71,8 @@ An MTP Package captures **the recipe without the ingredients** — intent, decis
 | Version | Status | Focus |
 |---------|--------|-------|
 | v0.1 | ✅ Released | YAML format, manual extraction/application, JSON Schema |
-| v0.2.x | ✅ Current | Lifecycle, provenance, execution semantics, redaction, drift, conformance. Latest patch: 0.2.1 |
-| v0.3 | Planned | `mtp-lint` validator, redaction checker, canonical examples |
+| v0.2.x | ✅ Released | Lifecycle, provenance, execution semantics, redaction, drift, conformance. Latest patch: 0.2.1 |
+| v0.3 | ✅ Current | `mtp-lint` CLI: schema validator, redaction scanner, completeness scorer, policy gate |
 | v0.4 | Planned | `mtp-run` reference runtime CLI, platform adapters |
 | v0.5 | Planned | Drift scoring engine, conformance test suite |
 | v0.6 | Planned | Registry specification, signatures, approval workflows |

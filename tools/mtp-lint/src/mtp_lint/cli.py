@@ -171,6 +171,16 @@ def score(file: str, output_format: str):
         click.echo(f"Error: {e}", err=True)
         sys.exit(2)
 
+    try:
+        artifact_type = detect_artifact_type(data)
+    except ValueError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(2)
+
+    if artifact_type != "package":
+        click.echo(f"Error: score only works on MTP packages, got {artifact_type}.", err=True)
+        sys.exit(2)
+
     results = score_package(data)
 
     if output_format == "json":

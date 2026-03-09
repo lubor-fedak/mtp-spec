@@ -135,7 +135,16 @@ def score_package(data: dict) -> dict:
     # Area breakdown
     areas: dict[str, dict] = {}
     for check in checks:
-        area = check["area"].split("_")[0] if check["area"].startswith(("step_", "edge_case_", "dead_end_")) else check["area"]
+        raw_area = check["area"]
+        # Aggregate individual items into their parent area
+        if raw_area.startswith("step_"):
+            area = "steps"
+        elif raw_area.startswith("edge_case_"):
+            area = "edge_cases"
+        elif raw_area.startswith("dead_end_"):
+            area = "dead_ends"
+        else:
+            area = raw_area
         if area not in areas:
             areas[area] = {"total": 0, "passed": 0}
         areas[area]["total"] += 1

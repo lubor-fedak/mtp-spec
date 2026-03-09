@@ -63,13 +63,15 @@ def check_policy(data: dict) -> dict:
     has_approval = bool(approval.get("approver") and approval.get("approved_at"))
     approval_required = approval.get("required", False)
 
-    gate_passed = all_passed and all_run
+    gate_passed = all_passed and all_run and has_classification
     if approval_required and not has_approval:
         gate_passed = False
 
     reason = "All policy checks passed" if gate_passed else []
     if not gate_passed:
         reasons = []
+        if not has_classification:
+            reasons.append("Missing data_classification")
         if not all_run:
             not_run = [s for s, r in scan_results.items() if r["status"] == "not_run"]
             reasons.append(f"Scans not run: {', '.join(not_run)}")

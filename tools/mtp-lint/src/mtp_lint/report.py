@@ -30,7 +30,7 @@ def generate_report(
     elif redaction_passed is False:
         overall = "fail"
     elif policy_passed is False:
-        overall = "warn"
+        overall = "fail"
     elif completeness_score is not None and completeness_score < 0.6:
         overall = "warn"
     else:

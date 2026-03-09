@@ -105,18 +105,46 @@ def _extract_strings(data: Any, path: str = "$") -> list[tuple[str, str]]:
 
 
 def _skip_path(path: str) -> bool:
-    """Skip paths that are structural/meta, not methodology content."""
+    """Skip paths that are purely structural, not content-bearing.
+
+    IMPORTANT: We intentionally do NOT skip package.author, provenance.source_ref,
+    or provenance.notes — these are common data leak vectors in enterprise contexts.
+    Only truly structural/enum fields are skipped.
+    """
     skip_segments = {
-        "mtp_version", "package.id", "package.created", "package.updated",
-        "package.source_platform", "package.author", "package.version",
-        "package.name", "package.tags",
-        "provenance.source_ref", "provenance.source_type",
+        "mtp_version",
+        "package.id",
+        "package.created",
+        "package.updated",
+        "package.source_platform",
+        "package.version",
+        "package.tags",
+        "provenance.source_type",
         "provenance.confidence",
-        "policy.redaction", "policy.pii_scan",
-        "policy.secrets_scan", "policy.client_identifier_scan",
-        "policy.regulated_content", "policy.approval",
+        "execution_semantics.on_success",
+        "execution_semantics.on_failure",
+        "execution_semantics.on_deviation",
+        "execution_semantics.timeout",
+        "execution_semantics.max_retries",
+        "policy.redaction.status",
+        "policy.redaction.checker",
+        "policy.redaction.checker_version",
+        "policy.redaction.report_hash",
+        "policy.redaction.evidence_ref",
+        "policy.pii_scan.status",
+        "policy.pii_scan.method",
+        "policy.pii_scan.checker",
+        "policy.secrets_scan.status",
+        "policy.secrets_scan.checker",
+        "policy.client_identifier_scan.status",
+        "policy.client_identifier_scan.method",
+        "policy.client_identifier_scan.checker",
+        "policy.regulated_content.status",
+        "policy.regulated_content.checker",
         "policy.data_classification",
-        "execution_semantics.",
+        "policy.approval.approver",
+        "policy.approval.approved_at",
+        "policy.approval.signature",
     }
     for seg in skip_segments:
         if seg in path:
@@ -219,14 +247,110 @@ def scan_client_identifiers(data: dict, dictionary: list[str] | None = None) -> 
     return findings
 
 
+def scan_regulated_content(data: dict) -> list[dict]:
+    """Scan for regulated content indicators.
+
+    This is a keyword-based heuristic scan, not a legal compliance tool.
+    It flags strings that reference specific regulated data categories
+    (health records, financial accounts, biometric data, etc.) in
+    methodology content where such references may indicate data leakage.
+
+    Limitation: This scanner detects references to regulated data categories,
+    not the regulated data itself. A methodology that says "handle health
+    records carefully" is different from one that contains actual health
+    records. Findings should be reviewed by a human.
+    """
+    REGULATED_INDICATORS = {
+        "health_data": re.compile(
+            r"(?i)\b(?:patient\s+(?:id|name|record|data|diagnosis)|"
+            r"medical\s+record|health\s+insurance|"
+            r"ICD[\s-]?\d{1,2}|diagnosis\s+code|"
+            r"prescription|blood\s+type|HIV|"
+            r"mental\s+health\s+(?:record|status|history))\b"
+        ),
+        "financial_account": re.compile(
+            r"(?i)\b(?:account\s+number\s*[:=]\s*\d|"
+            r"routing\s+number|swift\s+code\s*[:=]|"
+            r"sort\s+code\s*[:=]|"
+            r"tax\s+(?:id|identification)\s+number)\b"
+        ),
+        "biometric": re.compile(
+            r"(?i)\b(?:fingerprint|retina\s+scan|facial\s+recognition\s+(?:data|template)|"
+            r"biometric\s+(?:data|template|hash)|voice\s+print)\b"
+        ),
+        "minor_data": re.compile(
+            r"(?i)\b(?:child(?:'s|s)?\s+(?:name|age|school|record)|"
+            r"minor\s+(?:data|record|information)|"
+            r"parental\s+consent|student\s+record)\b"
+        ),
+    }
+
+    findings = []
+    for path, value in _extract_strings(data):
+        if _skip_path(path):
+            continue
+        for name, pattern in REGULATED_INDICATORS.items():
+            matches = pattern.findall(value)
+            if matches:
+                findings.append({
+                    "category": "regulated_content",
+                    "pattern": name,
+                    "path": path,
+                    "match_count": len(matches),
+                    "sample": matches[0][:40],
+                    "severity": "warning",
+                    "note": "Keyword indicator — review whether this is a reference to data categories or actual data leakage.",
+                })
+    return findings
+
+
+def scan_literal_data(data: dict) -> list[dict]:
+    """Scan for patterns that suggest literal data values leaked into the methodology.
+
+    Detects: CSV-like rows, JSON fragments with realistic values,
+    SQL-like data literals, and suspiciously specific numeric values
+    that look like real records rather than methodology thresholds.
+    """
+    LITERAL_PATTERNS = {
+        "csv_row": re.compile(
+            r'(?:^|\n)\s*(?:"[^"]*"|[^,\n"]{1,30})\s*(?:,\s*(?:"[^"]*"|\d[\d.]*)\s*){3,}'
+        ),
+        "json_fragment": re.compile(
+            r'\{"[a-z_]+"\s*:\s*"[^"]{5,}"(?:\s*,\s*"[a-z_]+"\s*:\s*"[^"]{5,}"){2,}\}'
+        ),
+        "sql_values": re.compile(
+            r"(?i)VALUES\s*\([^)]+\)"
+        ),
+    }
+
+    findings = []
+    for path, value in _extract_strings(data):
+        if _skip_path(path):
+            continue
+        for name, pattern in LITERAL_PATTERNS.items():
+            matches = pattern.findall(value)
+            if matches:
+                findings.append({
+                    "category": "literal_data",
+                    "pattern": name,
+                    "path": path,
+                    "match_count": len(matches),
+                    "sample": matches[0][:40] + "..." if len(matches[0]) > 40 else matches[0],
+                    "severity": "warning",
+                })
+    return findings
+
+
 def scan_all(data: dict, client_dictionary: list[str] | None = None) -> dict:
     """Run all redaction scans and return consolidated results."""
     pii = scan_pii(data)
     secrets = scan_secrets(data)
     entropy = scan_high_entropy(data)
     client_ids = scan_client_identifiers(data, client_dictionary)
+    regulated = scan_regulated_content(data)
+    literal = scan_literal_data(data)
 
-    all_findings = pii + secrets + entropy + client_ids
+    all_findings = pii + secrets + entropy + client_ids + regulated + literal
 
     return {
         "total_findings": len(all_findings),
@@ -235,6 +359,8 @@ def scan_all(data: dict, client_dictionary: list[str] | None = None) -> dict:
             "secret": len(secrets),
             "entropy": len(entropy),
             "client_identifier": len(client_ids),
+            "regulated_content": len(regulated),
+            "literal_data": len(literal),
         },
         "passed": len(all_findings) == 0,
         "findings": all_findings,

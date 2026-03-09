@@ -2,6 +2,43 @@
 
 All notable changes to the MTP specification are documented in this file.
 
+## [0.3] — 2026-03-09
+
+### First tooling deliverable: mtp-lint
+- New Python CLI tool in `tools/mtp-lint/`, installable via `pip install -e .`
+- Four commands: `check` (full pipeline), `validate` (schema only), `redact` (scan only), `score` (completeness only)
+- Machine-readable JSON output with report hash, or human-readable text
+
+### Schema validation
+- Validates MTP packages against v0.1 or v0.2 JSON Schemas (auto-detected)
+- Validates execution reports against v0.2 execution report schema
+- Reports all errors with JSON paths
+
+### Redaction scanner
+- PII detection: email, phone, IP address, Czech birth number, national ID, credit card, IBAN, URL parameters
+- Secret detection: API keys, bearer tokens, passwords, connection strings, AWS keys, GitHub tokens, private keys, JWTs, Slack tokens
+- High-entropy string detection via Shannon entropy analysis
+- Client identifier scanning via user-provided dictionary (`--client-dict`)
+- Regulated content keyword scanning: health data, financial accounts, biometric data, minor data indicators
+- Literal data detection: CSV rows, JSON fragments, SQL VALUES in methodology text
+- Scans ALL content-bearing fields including package.author and provenance.source_ref (not skipped — these are common leak vectors)
+
+### Completeness scoring
+- 72-check scoring engine across 11 areas: intent, input, methodology, steps, edge_cases, dead_ends, output, adaptation, policy
+- v0.2-aware: checks provenance, execution_semantics, policy scan status
+- Composite 0–100% score with rating (excellent/good/fair/poor)
+- Correct area aggregation for steps, edge_cases, dead_ends
+
+### Policy gate
+- Enterprise execution gate: all 5 scan categories must be run and passed
+- data_classification is required for gate pass
+- Approval requirement enforcement when approval.required is true
+- Policy gate failure = overall FAIL (exit code 1), not warning
+
+### Artifact type safety
+- `score` and `check` commands validate artifact type before processing
+- Execution reports are correctly rejected by score command (exit 2)
+
 ## [0.2.1] — 2026-03-09
 
 ### Schema/spec alignment fixes
