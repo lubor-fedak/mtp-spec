@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lubor-fedak/mtp-spec/schema/mtp-package-v0.2.json",
+  "title": "MTP Package v0.2",
+  "description": "Methodology Transfer Protocol — a methodology control plane for portable AI methodologies. Version 0.2.",
+  "type": "object",
+  "required": ["mtp_version", "package", "intent", "input", "methodology", "output"],
+  "properties": {
+    "mtp_version": {
+      "type": "string",
+      "enum": ["0.1", "0.2"],
+      "description": "MTP specification version"
+    },
+    "package": {
+      "type": "object",
+      "required": ["id", "name", "version", "created", "author"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "created": { "type": "string", "format": "date-time" },
+        "updated": { "type": "string", "format": "date-time" },
+        "author": { "type": "string" },
+        "source_platform": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "intent": {
+      "type": "object",
+      "required": ["goal"],
+      "properties": {
+        "goal": { "type": "string", "minLength": 10 },
+        "context": { "type": "string" },
+        "success_criteria": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "non_goals": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "input": {
+      "type": "object",
+      "required": ["description"],
+      "properties": {
+        "description": { "type": "string" },
+        "schema": { "type": "array", "items": { "$ref": "#/$defs/fieldDefinition" } },
+        "assumptions": { "type": "array", "items": { "type": "string" } },
+        "preprocessing": { "type": "array", "items": { "$ref": "#/$defs/preprocessingStep" } }
+      }
+    },
+    "methodology": {
+      "type": "object",
+      "required": ["approach", "steps"],
+      "properties": {
+        "approach": { "type": "string", "minLength": 10 },
+        "steps": { "type": "array", "items": { "$ref": "#/$defs/methodologyStep" }, "minItems": 1 }
+      }
+    },
+    "edge_cases": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/edgeCase" }
+    },
+    "constraints": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/constraint" }
+    },
+    "output": {
+      "type": "object",
+      "required": ["description"],
+      "properties": {
+        "description": { "type": "string" },
+        "schema": { "type": "array", "items": { "$ref": "#/$defs/fieldDefinition" } },
+        "quality_checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["check", "failure_action"],
+            "properties": {
+              "check": { "type": "string" },
+              "failure_action": { "type": "string" },
+              "is_blocking": { "type": "boolean", "default": false }
+            }
+          }
+        }
+      }
+    },
+    "dead_ends": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/deadEnd" }
+    },
+    "adaptation": {
+      "type": "object",
+      "properties": {
+        "flexibility": { "type": "string" },
+        "fixed_elements": { "type": "string" },
+        "target_requirements": { "type": "string" }
+      }
+    },
+    "policy": {
+      "$ref": "#/$defs/policyEnvelope"
+    }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "required": ["source_type"],
+      "properties": {
+        "source_type": {
+          "type": "string",
+          "enum": ["conversation", "session", "document", "manual", "composite"]
+        },
+        "source_ref": {
+          "type": "string",
+          "description": "Opaque reference to source material"
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low"]
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "executionSemantics": {
+      "type": "object",
+      "properties": {
+        "on_success": {
+          "type": "string",
+          "enum": ["proceed"],
+          "default": "proceed"
+        },
+        "on_failure": {
+          "type": "string",
+          "enum": ["halt", "skip_with_flag", "retry_once", "escalate"],
+          "default": "halt"
+        },
+        "on_deviation": {
+          "type": "string",
+          "enum": ["flag_and_proceed", "halt", "ask_human"],
+          "default": "flag_and_proceed"
+        },
+        "timeout": {
+          "type": "string",
+          "description": "Optional max duration (e.g., '30s', '5m', 'none')"
+        },
+        "max_retries": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 1
+        }
+      }
+    },
+    "fieldDefinition": {
+      "type": "object",
+      "required": ["field", "type", "description"],
+      "properties": {
+        "field": { "type": "string" },
+        "type": { "type": "string" },
+        "description": { "type": "string" },
+        "required": { "type": "boolean", "default": false },
+        "constraints": { "type": "string" }
+      }
+    },
+    "preprocessingStep": {
+      "type": "object",
+      "required": ["step", "action", "rationale"],
+      "properties": {
+        "step": { "type": "integer", "minimum": 1 },
+        "action": { "type": "string" },
+        "rationale": { "type": "string" }
+      }
+    },
+    "methodologyStep": {
+      "type": "object",
+      "required": ["step", "name", "action"],
+      "properties": {
+        "step": { "type": "integer", "minimum": 1 },
+        "name": { "type": "string" },
+        "action": { "type": "string", "minLength": 10 },
+        "rationale": { "type": "string" },
+        "depends_on": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 1 }
+        },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "execution_semantics": { "$ref": "#/$defs/executionSemantics" },
+        "decision_points": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["condition", "then"],
+            "properties": {
+              "condition": { "type": "string" },
+              "then": { "type": "string" },
+              "else": { "type": "string" },
+              "rationale": { "type": "string" }
+            }
+          }
+        },
+        "validation": { "type": "string" }
+      }
+    },
+    "edgeCase": {
+      "type": "object",
+      "required": ["scenario", "handling"],
+      "properties": {
+        "scenario": { "type": "string" },
+        "handling": { "type": "string" },
+        "rationale": { "type": "string" },
+        "severity": { "type": "string", "enum": ["critical", "warning", "info"] },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "constraint": {
+      "type": "object",
+      "required": ["type", "description", "enforcement"],
+      "properties": {
+        "type": { "type": "string", "enum": ["performance", "accuracy", "compliance", "security"] },
+        "description": { "type": "string" },
+        "enforcement": { "type": "string" }
+      }
+    },
+    "deadEnd": {
+      "type": "object",
+      "required": ["approach", "reason", "lesson"],
+      "properties": {
+        "approach": { "type": "string" },
+        "reason": { "type": "string" },
+        "lesson": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "scanResult": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["passed", "failed", "not_run"]
+        },
+        "last_checked": { "type": "string", "format": "date-time" },
+        "checker": { "type": "string" },
+        "method": { "type": "string" },
+        "patterns_checked": { "type": "array", "items": { "type": "string" } },
+        "frameworks": { "type": "array", "items": { "type": "string" } },
+        "findings": { "type": "array", "items": { "type": "string" }, "default": [] }
+      }
+    },
+    "policyEnvelope": {
+      "type": "object",
+      "properties": {
+        "data_classification": {
+          "type": "string",
+          "enum": ["public", "internal", "confidential", "restricted"]
+        },
+        "redaction": { "$ref": "#/$defs/scanResult" },
+        "pii_scan": { "$ref": "#/$defs/scanResult" },
+        "secrets_scan": { "$ref": "#/$defs/scanResult" },
+        "regulated_content": { "$ref": "#/$defs/scanResult" },
+        "approval": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean", "default": false },
+            "approver": { "type": "string" },
+            "approved_at": { "type": "string" },
+            "signature": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}
