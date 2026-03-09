@@ -43,10 +43,10 @@ mtp-lint score examples/churn-risk-scoring-v0.2.yaml
 
 | Check | Command | Description |
 |-------|---------|-------------|
-| Schema | `validate` | JSON Schema validation against MTP v0.1 or v0.2 |
-| Redaction | `redact` | PII, secrets, high-entropy strings, client identifiers |
-| Completeness | `score` | Provenance, rationale, validation rules, execution semantics |
-| Policy gate | `check` | All policy scans run and passed, classification present |
+| Schema | `validate` | JSON Schema validation against MTP v0.1 or v0.2 (auto-detected) |
+| Redaction | `redact` | PII, secrets, high-entropy strings, client identifiers, regulated content keywords, literal data patterns |
+| Completeness | `score` | Provenance, rationale, validation rules, execution semantics, policy scans |
+| Policy gate | `check` | All 5 policy scans run and passed, data classification present, approval if required |
 
 ## Output formats
 

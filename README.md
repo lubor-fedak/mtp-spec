@@ -54,25 +54,79 @@ An MTP Package captures **the recipe without the ingredients** — intent, decis
 
 ## Quick Start
 
-1. Develop your methodology in any AI system
-2. Extract an MTP Package using the [extraction prompt template](spec/MTP-SPEC-v0.2.md#102-extraction-prompt-template)
-3. Validate the package for schema conformance and redaction
-4. Execute in your target AI system using the [application prompt template](spec/MTP-SPEC-v0.2.md#111-target-system-prompt-template)
-5. Review the execution report — states, deviations, drift
+### 1. Extract a methodology
+
+Develop your methodology in any AI system, then extract an MTP Package using the [extraction prompt template](spec/MTP-SPEC-v0.2.md#102-extraction-prompt-template).
+
+### 2. Validate with mtp-lint
+
+```bash
+cd tools/mtp-lint && pip install -e .
+mtp-lint check your-package.yaml
+```
+
+This runs schema validation, redaction scanning, completeness scoring, and the policy gate in one pass.
+
+### 3. Execute in a target system
+
+Pass the validated package to your target AI using the [application prompt template](spec/MTP-SPEC-v0.2.md#111-target-system-prompt-template).
+
+### 4. Review the execution report
+
+Check step states, deviations, and drift against your baseline.
 
 ## Specification
 
-📄 **[MTP Specification v0.2](spec/MTP-SPEC-v0.2.md)** — Full specification: lifecycle, package format, provenance, execution semantics, redaction discipline, drift measurement, conformance levels, and benchmark framework. Current repository patch release: **0.2.1**.
+📄 **[MTP Specification v0.2](spec/MTP-SPEC-v0.2.md)** — Full specification: lifecycle, package format, provenance, execution semantics, redaction discipline, drift measurement, conformance levels, and benchmark framework. Current patch: **0.2.1**.
 
-📄 **[MTP Specification v0.1](spec/MTP-SPEC-v0.1.md)** — Original draft (superseded).
+📄 **[MTP Specification v0.1](spec/MTP-SPEC-v0.1.md)** — Original draft (superseded by v0.2).
+
+## Schemas
+
+MTP provides JSON Schemas (Draft 2020-12) for machine validation of all artifacts:
+
+| Schema | Validates | Strictness |
+|--------|-----------|------------|
+| [mtp-package-v0.2.json](schema/mtp-package-v0.2.json) | MTP Packages | Strict: `mtp_version` must be `"0.2"`, `policy` required, `provenance` and `execution_semantics` required on steps |
+| [mtp-execution-report-v0.2.json](schema/mtp-execution-report-v0.2.json) | Execution Reports | Includes conditional validation for `overall_status` derivation, state-dependent required fields |
+| [mtp-package-v0.1.json](schema/mtp-package-v0.1.json) | Legacy v0.1 packages | Permissive: backward compatibility |
+
+v0.1 packages are correctly rejected by the v0.2 schema. Use the v0.1 schema for legacy packages.
+
+## Tooling
+
+### mtp-lint (v0.3)
+
+Validator, redaction checker, completeness scorer, and enterprise policy gate. See [tools/mtp-lint/README.md](tools/mtp-lint/README.md) for full usage.
+
+```bash
+cd tools/mtp-lint && pip install -e .
+```
+
+| Command | What it does |
+|---------|-------------|
+| `mtp-lint check <file>` | Full pipeline: schema + redaction + completeness + policy gate |
+| `mtp-lint validate <file>` | Schema validation only (packages and execution reports) |
+| `mtp-lint redact <file>` | Redaction scan: PII, secrets, entropy, client identifiers, regulated content, literal data |
+| `mtp-lint score <file>` | Completeness scoring: provenance, rationale, validation rules, execution semantics |
+
+All commands support `--format json` for machine-readable output with report hash. `check` exits with code 1 on schema errors, redaction findings, or policy gate failure.
+
+## Examples
+
+| File | MTP Version | Description |
+|------|-------------|-------------|
+| [churn-risk-scoring-v0.2.yaml](examples/churn-risk-scoring-v0.2.yaml) | v0.2 | Golden v0.2 package — customer churn scoring with full provenance, execution semantics, and policy envelope |
+| [churn-risk-scoring-execution-report-v0.2.yaml](examples/churn-risk-scoring-execution-report-v0.2.yaml) | v0.2 | Execution report for the churn scoring package — includes deviation handling and drift score |
+| [valuation-report-extraction.yaml](examples/valuation-report-extraction.yaml) | v0.1 | Document processing methodology (v0.1 format, no provenance or policy) |
 
 ## Roadmap
 
 | Version | Status | Focus |
 |---------|--------|-------|
 | v0.1 | ✅ Released | YAML format, manual extraction/application, JSON Schema |
-| v0.2.x | ✅ Released | Lifecycle, provenance, execution semantics, redaction, drift, conformance. Latest patch: 0.2.1 |
-| v0.3 | ✅ Current | `mtp-lint` CLI: schema validator, redaction scanner, completeness scorer, policy gate |
+| v0.2.x | ✅ Released | Lifecycle, provenance, execution semantics, redaction, drift, conformance. Patch: 0.2.1 |
+| v0.3.x | ✅ Current | `mtp-lint` CLI: schema validator, redaction scanner (6 categories), completeness scorer, policy gate. Patch: 0.3.1 |
 | v0.4 | Planned | `mtp-run` reference runtime CLI, platform adapters |
 | v0.5 | Planned | Drift scoring engine, conformance test suite |
 | v0.6 | Planned | Registry specification, signatures, approval workflows |
@@ -86,6 +140,7 @@ MTP is an open specification shaped by community feedback. We especially welcome
 - **Real-world extraction attempts** — try it on your workflow, report what's missing
 - **Platform-specific insights** — how does MTP map to your AI stack?
 - **Enterprise perspective** — does the policy envelope cover your compliance needs?
+- **Tooling contributions** — extraction tools, IDE integrations, CI/CD plugins
 
 Open an issue, submit a PR, or start a discussion.
 
