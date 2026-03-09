@@ -85,7 +85,8 @@ class TestExtractCli:
         assert result.exit_code == 0
         merged = __import__("yaml").safe_load(merged_path.read_text(encoding="utf-8"))
         assert not validate_schema(merged, "package", "0.2")
-        assert len(merged["methodology"]["steps"]) >= len(merged["methodology"]["steps"])
+        base = __import__("yaml").safe_load(Path(EXAMPLE_PACKAGE).read_text(encoding="utf-8"))
+        assert len(merged["methodology"]["steps"]) >= len(base["methodology"]["steps"])
 
     def test_precheck_updates_policy(self, runner: CliRunner, tmp_path: Path) -> None:
         package_path = tmp_path / "draft.yaml"

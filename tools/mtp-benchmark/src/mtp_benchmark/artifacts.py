@@ -11,7 +11,7 @@ import jsonschema
 import yaml
 
 
-REPO_ROOT = Path(__file__).resolve().parents[4]
+REPO_ROOT = Path(__file__).parent.parent.parent.parent.parent
 SCHEMA_DIR = REPO_ROOT / "schema"
 
 SCHEMAS = {

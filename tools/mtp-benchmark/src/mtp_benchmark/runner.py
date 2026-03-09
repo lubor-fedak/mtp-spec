@@ -234,7 +234,7 @@ def _resolve_ref(base_path: Path, ref: str) -> Path:
     path = Path(ref)
     if path.is_absolute():
         return path
-    return (base_path.parent / path).resolve()
+    return base_path.parent / path
 
 
 def _slugify(value: str) -> str:
