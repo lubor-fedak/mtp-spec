@@ -2,10 +2,10 @@ execution_report:
   mtp_package_id: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
   mtp_package_version: "1.0.0"
   mtp_spec_version: "0.2"
-  target_platform: "mock-runtime"
+  target_platform: "mock-adapter-v0.4"
   executor: "mtp-run v0.4.0"
-  timestamp: "2026-03-09T19:04:32Z"
-  duration_seconds: 8.0
+  timestamp: "2026-03-09T19:41:30.489605+00:00"
+  duration_seconds: 0.0
   overall_status: "success"
   overall_confidence: "high"
 
@@ -13,33 +13,33 @@ execution_report:
     - step: 1
       state: "success"
       validation_result: "pass"
-      duration_seconds: 1.2
+      duration_seconds: 0.0
       retries_attempted: 0
-      notes: "Mock adapter executed step 1: Login Frequency Decline Score."
+      notes: "Mock adapter: step executed successfully."
     - step: 2
       state: "success"
       validation_result: "pass"
-      duration_seconds: 1.4
+      duration_seconds: 0.0
       retries_attempted: 0
-      notes: "Mock adapter executed step 2: Support Sentiment Score."
+      notes: "Mock adapter: step executed successfully."
     - step: 3
       state: "success"
       validation_result: "pass"
-      duration_seconds: 1.6
+      duration_seconds: 0.0
       retries_attempted: 0
-      notes: "Mock adapter executed step 3: Feature Adoption Breadth Score."
+      notes: "Mock adapter: step executed successfully."
     - step: 4
       state: "success"
       validation_result: "pass"
-      duration_seconds: 1.8
+      duration_seconds: 0.0
       retries_attempted: 0
-      notes: "Mock adapter executed step 4: Contract Renewal Proximity Score."
+      notes: "Mock adapter: step executed successfully."
     - step: 5
       state: "success"
       validation_result: "pass"
-      duration_seconds: 2.0
+      duration_seconds: 0.0
       retries_attempted: 0
-      notes: "Mock adapter executed step 5: Composite Score and Ranking."
+      notes: "Mock adapter: step executed successfully."
 
   edge_cases_encountered: []
   novel_situations: []
@@ -49,20 +49,20 @@ execution_report:
     - check: "All input accounts present in output (scored or excluded)"
       result: "pass"
       is_blocking: true
-      notes: "Mock adapter marked quality check as passed."
+      notes: "Mock adapter reference run marked this quality check as passed."
     - check: "All composite scores are 0-100 and equal sum of sub-scores"
       result: "pass"
       is_blocking: true
-      notes: "Mock adapter marked quality check as passed."
+      notes: "Mock adapter reference run marked this quality check as passed."
     - check: "Output is sorted by churn_risk descending"
       result: "pass"
       is_blocking: false
-      notes: "Mock adapter marked quality check as passed."
+      notes: "Mock adapter reference run marked this quality check as passed."
 
   policy_compliance:
     data_leaked: false
     pii_detected: false
-    notes: "Mock adapter does not ingest live data and emits reference-safe output."
+    notes: ""
 
   drift_score:
     composite: 1.0
@@ -77,12 +77,11 @@ execution_report:
       novel_situation_rate: 1.0
       dead_end_avoidance: 1.0
     weights_used:
-      step_fidelity: 0.25
-      deviation_rate: 0.15
-      validation_pass_rate: 0.25
-      output_quality: 0.20
-      edge_case_coverage: 0.10
-      novel_situation_rate: 0.03
-      dead_end_avoidance: 0.02
+      step_fidelity: 0.2778
+      deviation_rate: 0.1667
+      validation_pass_rate: 0.2778
+      output_quality: 0.2222
+      novel_situation_rate: 0.0333
+      dead_end_avoidance: 0.0222
 
-  report_hash: "sha256:6841fc4cb00dc069a65f18a27d8764375383e3940009ff38e0a12cadb565f9d7"
+  report_hash: "sha256:0d9d8ebb16ed91586a000a79ef46239a79eeceb021c7e38b324dfb271bd73c48"

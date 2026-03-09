@@ -136,7 +136,8 @@ cd tools/mtp-run && pip install -e ".[all]"    # all adapters (Claude, OpenAI, A
 | `mtp-run exec <package> --data <file>` | Execute a package against data via LLM adapter |
 | `mtp-run score <report>` | Compute weighted drift score for a single report (spec §8.3) |
 | `mtp-run adapters` | List available adapters and their configuration status |
-| `mtp-run drift <report1> <report2>` | Compare two execution reports — state agreement and divergence |
+| `mtp-run drift <report1> <report2>` | Compute weighted cross-report drift plus step agreement and per-step differences |
+| `mtp-run e2e <package> --data <file> --output-dir <dir>` | Run mock plus one configured real adapter and store both reports with comparison JSON |
 
 Supported adapters: `mock` (deterministic, no API keys), `anthropic` (Claude), `openai` (GPT-4o), `openai --azure` (Azure OpenAI).
 
@@ -146,7 +147,7 @@ Supported adapters: `mock` (deterministic, no API keys), `anthropic` (Claude), `
 |------|------|-------------|
 | [churn-risk-scoring-v0.2.yaml](examples/churn-risk-scoring-v0.2.yaml) | Package (v0.2) | Golden v0.2 package — customer churn scoring with full provenance, execution semantics, and policy envelope |
 | [churn-risk-scoring-mock-execution-report-v0.2.yaml](examples/churn-risk-scoring-mock-execution-report-v0.2.yaml) | Exec Report (v0.2) | Deterministic mock runtime report from `mtp-run exec` — 5 steps success, drift 1.0 |
-| [churn-risk-scoring-execution-report-v0.2.yaml](examples/churn-risk-scoring-execution-report-v0.2.yaml) | Exec Report (v0.2) | Execution report with deviation handling and drift score |
+| [churn-risk-scoring-execution-report-v0.2.yaml](examples/churn-risk-scoring-execution-report-v0.2.yaml) | Exec Report (v0.2) | Example real-platform-style execution report with deviation handling and corrected weighted drift score |
 | [test-data-churn.csv](examples/test-data-churn.csv) | Test Data | Sample data for running the churn scoring package |
 | [valuation-report-extraction.yaml](examples/valuation-report-extraction.yaml) | Package (v0.1) | Document processing methodology (v0.1 format) |
 

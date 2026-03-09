@@ -87,7 +87,7 @@ execution_report:
     notes: "Execution used only permitted fields from the input schema."
 
   drift_score:
-    composite: 0.96
+    composite: 0.92
     baseline_type: "reference_run"
     baseline_ref: "reports/churn-risk-scoring-reference-run-2026-03-08.yaml"
     components:
@@ -107,5 +107,5 @@ execution_report:
       novel_situation_rate: 0.03
       dead_end_avoidance: 0.02
 
-  report_hash: "sha256:9e9bd52d4509f7b643403bf8a8c089527e1ac15efebc2d722f2620a6efb9c1c2"
+  report_hash: "sha256:23de2d1d3189ecb667d5eb30e92556d7496686a7de5d77e43842814e716009db"
   signature: "optional-demo-signature"

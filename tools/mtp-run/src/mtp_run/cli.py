@@ -4,15 +4,97 @@ from __future__ import annotations
 
 import json
 import sys
-from pathlib import Path
+import time
 
 import click
 
 from mtp_run import __version__
-from mtp_run.adapters import get_adapter, list_adapters
-from mtp_run.drift import compare_reports, compute_drift_score
-from mtp_run.io_utils import load_artifact, dump_yaml, validate_package, validate_execution_report
-from mtp_run.reporting import build_execution_report
+from mtp_run.adapters import get_adapter, list_adapter_statuses
+from mtp_run.drift import compare_reports
+from mtp_run.executor import execute_package
+from mtp_run.io_utils import dump_yaml, load_artifact, validate_execution_report, validate_package
+from mtp_run.report_builder import build_execution_report
+
+
+def _quality_checks_for_adapter(package: dict, adapter_name: str) -> list[dict]:
+    if adapter_name != "mock":
+        return []
+
+    checks = []
+    for quality_check in package.get("output", {}).get("quality_checks", []):
+        checks.append({
+            "check": quality_check.get("check", ""),
+            "result": "pass",
+            "is_blocking": bool(quality_check.get("is_blocking", False)),
+            "notes": "Mock adapter reference run marked this quality check as passed.",
+        })
+    return checks
+
+
+def _run_execution(
+    package: dict,
+    data: str,
+    adapter_name: str,
+    model: str | None,
+    azure: bool,
+    quiet: bool,
+    baseline_ref: str | None = None,
+    baseline_type: str | None = None,
+    baseline_report: dict | None = None,
+) -> dict:
+    adapter = get_adapter(adapter_name, model=model, azure=azure)
+    if not adapter.is_available():
+        raise RuntimeError(f"Adapter '{adapter_name}' is not available. Check SDK installation and API keys.")
+
+    step_count = len(package.get("methodology", {}).get("steps", []))
+
+    def on_start(step_num: int, step_name: str) -> None:
+        if not quiet:
+            click.echo(f"  [{step_num}/{step_count}] {step_name}...", nl=False, err=True)
+
+    def on_end(step_num: int, step_name: str, result) -> None:
+        if not quiet:
+            state = result.state.upper()
+            colors = {
+                "SUCCESS": "green", "PASS": "green",
+                "PARTIAL": "yellow", "DEVIATION": "yellow",
+                "FAILURE": "red", "ESCALATED": "red",
+                "SKIPPED": "white",
+            }
+            click.echo(f" {click.style(state, fg=colors.get(state, 'white'))}", err=True)
+
+    if not quiet:
+        click.echo(f"MTP Run — executing with {adapter.platform_id()}", err=True)
+        click.echo(f"  Steps: {step_count}", err=True)
+        click.echo("", err=True)
+
+    t0 = time.time()
+    raw_results = execute_package(
+        package=package,
+        data=data,
+        adapter=adapter,
+        on_step_start=on_start,
+        on_step_end=on_end,
+    )
+    duration = time.time() - t0
+
+    report = build_execution_report(
+        package=package,
+        raw_results=raw_results,
+        duration_seconds=duration,
+        executor_id=f"mtp-run v{__version__}",
+        quality_checks=_quality_checks_for_adapter(package, adapter_name),
+        baseline_ref=baseline_ref,
+        baseline_type=baseline_type,
+        baseline_report=baseline_report,
+    )
+
+    report_errors = validate_execution_report(report)
+    if report_errors:
+        errors = "\n".join(f"  - {error}" for error in report_errors)
+        raise RuntimeError(f"Generated execution report is not schema-valid:\n{errors}")
+
+    return report
 
 
 @click.group()
@@ -55,36 +137,41 @@ def exec_cmd(package_file: str, data_file: str | None, adapter_name: str,
         click.echo("Error: not an MTP package (no mtp_version).", err=True)
         sys.exit(2)
 
-    # Validate package
-    errors = validate_package(package)
-    if errors:
-        click.echo(f"Package validation failed ({len(errors)} errors):", err=True)
-        for e in errors[:5]:
-            click.echo(f"  {e}", err=True)
-        sys.exit(2)
+    package_errors = validate_package(package)
+    if package_errors:
+        click.echo("Error: package is not schema-valid:", err=True)
+        for error in package_errors:
+            click.echo(f"  - {error}", err=True)
+        sys.exit(1)
 
-    # Get adapter
+    # Load data
+    if data_file is None:
+        data = ""
+    else:
+        try:
+            with open(data_file, encoding="utf-8") as handle:
+                data = handle.read()
+        except Exception as e:
+            click.echo(f"Error loading data: {e}", err=True)
+            sys.exit(2)
+
     azure = adapter_name == "azure-openai"
-    effective_name = "openai" if adapter_name == "azure-openai" else adapter_name
+
     try:
-        adapter = get_adapter(effective_name, model=model, azure=azure)
-    except ValueError as e:
+        report = _run_execution(
+            package=package,
+            data=data,
+            adapter_name=adapter_name,
+            model=model,
+            azure=azure,
+            quiet=quiet,
+        )
+    except RuntimeError as e:
         click.echo(f"Error: {e}", err=True)
         sys.exit(2)
-
-    step_count = len(package.get("methodology", {}).get("steps", []))
-
-    if not quiet:
-        click.echo(f"MTP Run — {package_file}", err=True)
-        click.echo(f"  Adapter:  {adapter.target_platform}", err=True)
-        click.echo(f"  Steps:    {step_count}", err=True)
-        click.echo("", err=True)
-
-    # Execute
-    raw_result = adapter.execute(package, __version__)
-
-    # Build report
-    report = build_execution_report(package, raw_result)
+    except Exception as e:
+        click.echo(f"Error: execution failed: {e}", err=True)
+        sys.exit(1)
 
     # Validate generated report
     report_errors = validate_execution_report(report)
@@ -99,7 +186,11 @@ def exec_cmd(package_file: str, data_file: str | None, adapter_name: str,
         formatted = yaml.safe_dump(report, sort_keys=False, allow_unicode=True)
 
     if output:
-        Path(output).write_text(formatted)
+        if fmt == "yaml":
+            dump_yaml(output, report)
+        else:
+            with open(output, "w", encoding="utf-8") as handle:
+                handle.write(formatted)
         if not quiet:
             click.echo(f"Report written to {output}", err=True)
     else:
@@ -123,54 +214,145 @@ def exec_cmd(package_file: str, data_file: str | None, adapter_name: str,
 @main.command()
 def adapters():
     """List available adapters and their status."""
+    statuses = list_adapter_statuses()
+
+
     click.echo("Available adapters:")
     click.echo("")
-    for info in list_adapters():
-        colors = {"ready": "green", "available": "yellow", "unavailable": "red", "planned": "white"}
-        badge = click.style(info.status.upper(), fg=colors.get(info.status, "white"))
-        click.echo(f"  {info.name:16s} {badge:28s} {info.notes}")
+    for item in statuses:
+        color = {
+            "ready": "green",
+            "not_configured": "yellow",
+            "missing_dependency": "red",
+        }.get(item.status, "white")
+        status = click.style(item.status.upper(), fg=color)
+        label = item.name if item.variant == "default" else f"{item.name} ({item.variant})"
+        click.echo(f"  {label:20s} {status:18s} {item.notes}")
 
 
 @main.command()
-@click.argument("report_file", type=click.Path(exists=True))
-@click.option("--format", "fmt", type=click.Choice(["text", "json"]), default="text")
-def score(report_file: str, fmt: str):
-    """Compute weighted drift score for a single execution report (spec §8.3)."""
+@click.argument("package_file", type=click.Path(exists=True))
+@click.option("--data", "data_file", type=click.Path(exists=True), required=True,
+              help="Path to data file used for both runs")
+@click.option("--real-adapter", type=click.Choice(["anthropic", "openai"]), default=None,
+              help="Real adapter to use. Default: first configured real adapter")
+@click.option("--real-model", default=None, help="Model override for the real adapter")
+@click.option("--azure", is_flag=True, default=False, help="Use Azure OpenAI for `--real-adapter openai`")
+@click.option("--output-dir", type=click.Path(file_okay=False), required=True,
+              help="Directory where mock/real reports and comparison JSON will be written")
+@click.option("--strict", is_flag=True, default=False,
+              help="Fail if no real adapter is configured instead of skipping the real-adapter run")
+def e2e(package_file: str, data_file: str, real_adapter: str | None, real_model: str | None,
+        azure: bool, output_dir: str, strict: bool):
+    """Run mock + real-adapter execution and compare the resulting reports."""
     try:
-        data = load_artifact(report_file)
+        package = load_artifact(package_file)
+        with open(data_file, encoding="utf-8") as handle:
+            data = handle.read()
     except Exception as e:
-        click.echo(f"Error: {e}", err=True)
+        click.echo(f"Error loading inputs: {e}", err=True)
         sys.exit(2)
 
-    if "execution_report" not in data:
-        click.echo("Error: File must be an MTP execution report.", err=True)
-        sys.exit(2)
+    package_errors = validate_package(package)
+    if package_errors:
+        click.echo("Error: package is not schema-valid:", err=True)
+        for error in package_errors:
+            click.echo(f"  - {error}", err=True)
+        sys.exit(1)
 
-    er = data["execution_report"]
-    steps = er.get("steps", [])
-    qc = er.get("quality_checks", [])
-    ec = er.get("edge_cases_encountered", [])
-    ns = er.get("novel_situations", [])
+    import os
 
-    result = compute_drift_score(steps, qc, ec, ns)
+    os.makedirs(output_dir, exist_ok=True)
 
-    if fmt == "json":
-        click.echo(json.dumps(result, indent=2))
-    else:
-        click.echo(f"Drift Score: {result['composite']}")
-        click.echo("")
-        click.echo(f"  {'Component':<25s} {'Score':>8s} {'Weight':>8s}")
-        click.echo(f"  {'-'*25} {'-'*8} {'-'*8}")
-        for key in ["step_fidelity", "deviation_rate", "validation_pass_rate",
-                     "output_quality", "edge_case_coverage", "novel_situation_rate",
-                     "dead_end_avoidance"]:
-            v = result["components"].get(key)
-            w = result["weights_used"].get(key)
-            vs = f"{v:.4f}" if v is not None else "n/a"
-            ws = f"{w:.4f}" if w is not None else "excl."
-            click.echo(f"  {key:<25s} {vs:>8s} {ws:>8s}")
+    mock_report = _run_execution(
+        package=package,
+        data=data,
+        adapter_name="mock",
+        model=None,
+        azure=False,
+        quiet=True,
+    )
+    mock_path = f"{output_dir.rstrip('/')}/mock-report.yaml"
+    dump_yaml(mock_path, mock_report)
 
-    sys.exit(0)
+    statuses = list_adapter_statuses()
+    ready_real = [
+        status for status in statuses
+        if status.name in {"anthropic", "openai"} and status.status == "ready"
+    ]
+
+    selected_adapter = real_adapter
+    if selected_adapter is None:
+        if azure and any(s.name == "openai" and s.variant == "azure" and s.status == "ready" for s in statuses):
+            selected_adapter = "openai"
+        elif ready_real:
+            selected_adapter = ready_real[0].name
+
+    if selected_adapter is None:
+        click.echo(f"Mock report written to {mock_path}")
+        message = "No real adapter is configured. Skipping real-adapter e2e run."
+        if strict:
+            click.echo(f"Error: {message}", err=True)
+            sys.exit(2)
+        click.echo(f"SKIP — {message}")
+        sys.exit(0)
+
+    if selected_adapter == "anthropic":
+        anthropic_ready = any(s.name == "anthropic" and s.status == "ready" for s in statuses)
+        if not anthropic_ready:
+            click.echo(f"Mock report written to {mock_path}")
+            message = "Anthropic adapter is not configured."
+            if strict:
+                click.echo(f"Error: {message}", err=True)
+                sys.exit(2)
+            click.echo(f"SKIP — {message}")
+            sys.exit(0)
+
+    if selected_adapter == "openai":
+        variant = "azure" if azure else "default"
+        openai_ready = any(
+            s.name == "openai" and s.variant == variant and s.status == "ready"
+            for s in statuses
+        )
+        if not openai_ready:
+            click.echo(f"Mock report written to {mock_path}")
+            message = f"OpenAI adapter ({variant}) is not configured."
+            if strict:
+                click.echo(f"Error: {message}", err=True)
+                sys.exit(2)
+            click.echo(f"SKIP — {message}")
+            sys.exit(0)
+
+    try:
+        real_report = _run_execution(
+            package=package,
+            data=data,
+            adapter_name=selected_adapter,
+            model=real_model,
+            azure=azure,
+            quiet=True,
+            baseline_ref=mock_path,
+            baseline_type="reference_run",
+            baseline_report=mock_report,
+        )
+    except Exception as e:
+        click.echo(f"Error: real-adapter execution failed: {e}", err=True)
+        sys.exit(1)
+
+    real_suffix = "openai-azure" if selected_adapter == "openai" and azure else selected_adapter
+    real_path = f"{output_dir.rstrip('/')}/{real_suffix}-report.yaml"
+    dump_yaml(real_path, real_report)
+
+    comparison = compare_reports(mock_report, real_report)
+    comparison_path = f"{output_dir.rstrip('/')}/comparison.json"
+    with open(comparison_path, "w", encoding="utf-8") as handle:
+        handle.write(json.dumps(comparison, indent=2))
+
+    click.echo(f"Mock report:  {mock_path}")
+    click.echo(f"Real report:  {real_path}")
+    click.echo(f"Comparison:   {comparison_path}")
+    click.echo(f"Cross-report drift: {comparison['comparison_drift']['composite']:.4f}")
+    click.echo(f"Step agreement: {int(comparison['state_agreement'] * 100)}%")
 
 
 @main.command()
@@ -190,29 +372,48 @@ def drift(report1: str, report2: str, fmt: str):
         click.echo("Error: Both files must be MTP execution reports.", err=True)
         sys.exit(2)
 
+    errors1 = validate_execution_report(r1)
+    errors2 = validate_execution_report(r2)
+    if errors1 or errors2:
+        click.echo("Error: both inputs must be schema-valid execution reports.", err=True)
+        for label, errors in (("report1", errors1), ("report2", errors2)):
+            for error in errors:
+                click.echo(f"  - {label}: {error}", err=True)
+        sys.exit(1)
+
     comparison = compare_reports(r1, r2)
 
     if fmt == "json":
         click.echo(json.dumps(comparison, indent=2))
     else:
         click.echo("Drift Comparison")
-        click.echo("=" * 55)
-        click.echo(f"  Left:  {report1} ({comparison['left_platform']})")
-        click.echo(f"  Right: {report2} ({comparison['right_platform']})")
+        click.echo(f"{'=' * 50}")
+        click.echo(f"Baseline:  {report1} ({comparison['baseline']['target_platform']})")
+        click.echo(f"Candidate: {report2} ({comparison['candidate']['target_platform']})")
         click.echo("")
-        click.echo(f"  Status: {comparison['left_status']} vs {comparison['right_status']}")
-        pct = int(comparison["step_state_agreement"] * 100)
-        click.echo(f"  State agreement: {pct}% ({comparison['matching_steps']}/{comparison['total_steps']})")
-
-        if "left_drift_score" in comparison:
-            click.echo(f"  Left drift score:  {comparison['left_drift_score']}")
-        if "right_drift_score" in comparison:
-            click.echo(f"  Right drift score: {comparison['right_drift_score']}")
-
-        click.echo("")
-        for sc in comparison["step_comparison"]:
-            icon = click.style("✓", fg="green") if sc["match"] else click.style("✗", fg="red")
-            click.echo(f"  Step {sc['step']:2d}: {sc['left_state']:12s} vs {sc['right_state']:12s} {icon}")
+        click.echo(
+            f"Baseline self-score:  {comparison['baseline']['drift_score']['composite']:.4f} "
+            f"[{comparison['baseline']['overall_status']}]"
+        )
+        click.echo(
+            f"Candidate self-score: {comparison['candidate']['drift_score']['composite']:.4f} "
+            f"[{comparison['candidate']['overall_status']}]"
+        )
+        click.echo(
+            f"Cross-report drift:   {comparison['comparison_drift']['composite']:.4f}"
+        )
+        click.echo(
+            f"Step agreement:       {int(comparison['state_agreement'] * 100)}% "
+            f"({comparison['matching_steps']}/{comparison['total_steps']})"
+        )
+        if comparison["differences"]:
+            click.echo("")
+            click.echo("Differences:")
+            for diff in comparison["differences"]:
+                click.echo(
+                    f"  - step {diff['step']}: "
+                    f"{diff['baseline_state']} != {diff['candidate_state']}"
+                )
 
     sys.exit(0)
 

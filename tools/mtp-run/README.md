@@ -53,11 +53,27 @@ mtp-run drift report-claude.yaml report-azure.yaml
 mtp-run drift report-march.yaml report-june.yaml --format json
 ```
 
+This reports:
+- baseline self-score
+- candidate self-score
+- weighted cross-report drift score
+- step-state agreement and per-step differences
+
 ### List available adapters
 
 ```bash
 mtp-run adapters
 ```
+
+### Run end-to-end mock + real adapter comparison
+
+```bash
+mtp-run e2e examples/churn-risk-scoring-v0.2.yaml \
+  --data examples/test-data-churn.csv \
+  --output-dir /tmp/mtp-e2e
+```
+
+If no real adapter is configured, the command writes the mock report and exits with a clear skip message.
 
 ## Commands
 
@@ -66,7 +82,8 @@ mtp-run adapters
 | `mtp-run exec` | Execute an MTP package against data through an LLM adapter |
 | `mtp-run score` | Compute weighted drift score for a single execution report (spec §8.3) |
 | `mtp-run adapters` | List available adapters and their configuration status |
-| `mtp-run drift` | Compare two execution reports — state agreement and divergence |
+| `mtp-run drift` | Compute weighted cross-report drift plus step agreement and per-step differences |
+| `mtp-run e2e` | Run mock + one configured real adapter, write both reports, and store comparison JSON |
 
 ## Execution Flow
 
@@ -82,7 +99,7 @@ mtp-run adapters
    e. Apply execution_semantics (on_failure, on_deviation)
    f. Record step result
 5. Derive overall_status (spec §7.2)
-6. Compute drift score (spec §8.3)
+6. Compute self-drift score (spec §8.3)
 7. Produce execution report
 ```
 
@@ -110,6 +127,8 @@ The mock adapter produces deterministic results for testing. Control step outcom
 ## Output
 
 Execution reports follow the MTP execution report schema (`schema/mtp-execution-report-v0.2.json`) and include step states, deviations, drift score, and report hash.
+
+When `--baseline` is provided to `mtp-run exec`, the report drift score becomes a cross-report score against that baseline.
 
 ## Exit codes
 

@@ -48,9 +48,18 @@ All notable changes to the MTP specification are documented in this file.
 - Output as YAML or JSON
 
 ### Drift comparison
-- Cross-report step-by-step state comparison
-- State agreement metric
-- Platform and temporal comparison support
+- Weighted cross-report drift scoring based on spec §8.3 component deltas
+- Baseline self-score + candidate self-score + cross-report methodology preservation score
+- Step agreement metric and per-step difference reporting
+
+### Adapter/runtime hardening
+- Real Anthropic and OpenAI adapters are surfaced as configured runtime adapters, not planned placeholders.
+- Dynamic adapter status reporting distinguishes `ready`, `not_configured`, and `missing_dependency`.
+- Runtime exceptions from adapters are captured as step failures so execution semantics and retries can still apply.
+- Edge cases, novel situations, and consciously avoided dead ends are now aggregated into execution reports.
+
+### End-to-end harness
+- Added `mtp-run e2e` to execute the same package via `mock` and one configured real adapter, store both reports, and emit comparison JSON.
 
 ### Schema fix
 - Execution report schema: allow null for validation_pass_rate, output_quality, edge_case_coverage (components that may be uncomputable)
