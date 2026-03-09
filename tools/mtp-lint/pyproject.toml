@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mtp-lint"
+version = "0.3.0"
+description = "Validator, redaction checker, and linter for MTP (Methodology Transfer Protocol) packages"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+authors = [
+    { name = "Lubor Fedák", email = "lubor@codemoravia.com" },
+]
+keywords = ["mtp", "methodology", "ai", "validation", "linter"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+    "jsonschema>=4.20.0",
+    "pyyaml>=6.0",
+    "click>=8.0",
+]
+
+[project.scripts]
+mtp-lint = "mtp_lint.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mtp_lint"]
