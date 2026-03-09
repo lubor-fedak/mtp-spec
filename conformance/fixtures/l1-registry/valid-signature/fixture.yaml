@@ -1,0 +1,8 @@
+id: l1-registry-valid-signature
+level: l1
+kind: registry_validation
+description: Example signature envelope must pass v0.6 schema validation.
+artifact: ../../../../examples/registry/signatures/b2c3d4e5-f6a7-8901-bcde-f12345678901/1.0.0/churn-risk-scoring.signature.v0.6.yaml
+expect:
+  valid: true
+  artifact_type: signature_envelope

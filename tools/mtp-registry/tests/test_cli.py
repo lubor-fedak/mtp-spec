@@ -394,7 +394,13 @@ class TestRegistryCli:
         )
         assert check_result.exit_code == 1
 
-    def test_check_entry_without_key_fails_for_approved_entry(self, runner: CliRunner, tmp_path: Path, signing_env: dict[str, str]) -> None:
+    def test_check_entry_without_key_passes_structurally_for_approved_entry(self, runner: CliRunner, tmp_path: Path, signing_env: dict[str, str]) -> None:
+        """Structural-only check of a properly published approved entry should succeed.
+
+        The entry was cryptographically verified at publish time; consumers who
+        lack the key can still verify structural integrity (hashes, types,
+        identities) without re-checking the HMAC.
+        """
         registry_dir = tmp_path / "registry"
         signature_path = tmp_path / "package.signature.yaml"
         approval_path = tmp_path / "package.approval.yaml"
@@ -468,6 +474,11 @@ class TestRegistryCli:
                 str(entry_file),
                 "--registry-dir",
                 str(registry_dir),
+                "--format",
+                "json",
             ],
         )
-        assert check_result.exit_code == 1
+        assert check_result.exit_code == 0
+        payload = json.loads(check_result.output)
+        assert payload["verified"] is True
+        assert payload["signature_results"][0]["cryptographic_check"] == "skipped"

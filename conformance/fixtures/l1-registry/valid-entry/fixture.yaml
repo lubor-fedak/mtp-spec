@@ -1,0 +1,8 @@
+id: l1-registry-valid-entry
+level: l1
+kind: registry_validation
+description: Example registry entry must pass v0.6 schema validation.
+artifact: ../../../../examples/registry/entries/customer-churn-risk-scoring-1.0.0.registry-entry.yaml
+expect:
+  valid: true
+  artifact_type: registry_entry

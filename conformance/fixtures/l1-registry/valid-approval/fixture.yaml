@@ -1,0 +1,8 @@
+id: l1-registry-valid-approval
+level: l1
+kind: registry_validation
+description: Example approval record must pass v0.6 schema validation.
+artifact: ../../../../examples/registry/approvals/b2c3d4e5-f6a7-8901-bcde-f12345678901/1.0.0/churn-risk-scoring.approval.v0.6.yaml
+expect:
+  valid: true
+  artifact_type: approval_record

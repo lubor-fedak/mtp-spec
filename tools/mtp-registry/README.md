@@ -1,57 +1,156 @@
 # mtp-registry
 
-Registry, signing, and approval workflow tooling for MTP.
+Registry, signing, and approval workflow tooling for MTP (v0.6).
 
 ## Install
 
 ```bash
-cd tools/mtp-registry && pip install -e .
+pip install -e tools/mtp-registry
 ```
 
 For development:
 
 ```bash
-cd tools/mtp-registry && pip install -e ".[dev]"
+pip install -e "tools/mtp-registry[dev]"
 ```
 
 ## What It Does
 
-`mtp-registry` introduces the `v0.6` trust layer:
+`mtp-registry` introduces the v0.6 trust layer on top of validated MTP v0.2 packages and execution reports. The trust model uses detached sidecar artifacts — existing packages and reports are never mutated.
 
-- local registry initialization
-- detached signature envelopes for packages and execution reports
-- approval record generation
-- registry publishing with copied artifacts and trust metadata
-- entry verification against linked artifacts, signatures, and approvals
+Three sidecar artifact types:
 
-The reference signature profile is `hmac-sha256`. It is symmetric and intended
-as the bootstrap implementation for reproducible signing in local and CI
-workflows. Future registry profiles can add asymmetric signatures without
-changing registry entry semantics.
+- **Signature Envelope** — detached HMAC-SHA256 signature over the canonical JSON representation of a package or execution report
+- **Approval Record** — governance decision (approved/rejected) tied to the signed artifact hash, with approver identity, policy, and rationale
+- **Registry Entry** — publishable asset record binding artifact, signatures, approvals, release status, and optional conformance/provenance metadata
 
-Approved registry publication requires `--key-env` during `publish` so the
-signature envelope is cryptographically verified before the entry is written.
+## Trust Model
+
+### Artifact Lifecycle
+
+```
+Validate → Sign → Approve → Publish → Verify
+```
+
+1. Package or execution report validated under MTP v0.2 schemas
+2. Detached signature envelope created for canonical artifact content
+3. One or more approval records reference the signed artifact hash
+4. Registry entry publishes the artifact into a local registry
+5. Consumers verify the entry plus all linked trust artifacts
+
+### Reference Signature Profile
+
+- Profile: `hmac-sha256`
+- Canonicalization: `json-sorted-v1` (sorted keys, compact separators, UTF-8)
+
+This is a bootstrap profile for local and CI workflows. Future profiles can add asymmetric signatures without changing registry entry semantics.
+
+### Registry Status
+
+| Status | Description |
+|--------|-------------|
+| `draft` | Signed and stored, not yet approved |
+| `review` | Under governance review |
+| `approved` | Published for use; requires cryptographic verification + at least one approved approval |
+| `deprecated` | Retained for traceability, no longer promoted |
 
 ## Commands
 
+| Command | Description |
+|---------|-------------|
+| `mtp-registry init <dir>` | Initialize a local registry directory structure |
+| `mtp-registry sign <artifact>` | Create a detached signature envelope |
+| `mtp-registry verify <artifact>` | Verify artifact against a signature envelope |
+| `mtp-registry approve <artifact>` | Create an approval record for a signed artifact |
+| `mtp-registry publish <artifact>` | Copy artifact + trust sidecars into registry, create entry |
+| `mtp-registry list <registry-dir>` | List registry entries (filter by `--status`, `--channel`) |
+| `mtp-registry check-entry <entry>` | Verify a published entry and all referenced trust artifacts |
+
+### Example workflow
+
 ```bash
+# 1. Initialize registry
 mtp-registry init registry/ --name "Internal MTP Registry"
-mtp-registry sign examples/churn-risk-scoring-v0.2.yaml --key-env MTP_REGISTRY_SIGNING_KEY --key-id dev-key --signer release-bot
-mtp-registry verify examples/churn-risk-scoring-v0.2.yaml --signature signature.yaml --key-env MTP_REGISTRY_SIGNING_KEY
-mtp-registry approve examples/churn-risk-scoring-v0.2.yaml --signature signature.yaml --approver-id risk-committee --approver-name "Risk Committee" --role governance --status approved --policy enterprise-v1 --rationale "Approved for internal use."
-mtp-registry publish examples/churn-risk-scoring-v0.2.yaml --registry-dir registry/ --signature signature.yaml --key-env MTP_REGISTRY_SIGNING_KEY --approval approval.yaml --status approved --channel internal
-mtp-registry check-entry registry/entries/churn-risk-scoring-1.0.0.registry-entry.yaml --registry-dir registry/ --key-env MTP_REGISTRY_SIGNING_KEY
+
+# 2. Sign a package
+export MTP_REGISTRY_SIGNING_KEY=your-shared-secret
+mtp-registry sign package.yaml \
+  --key-env MTP_REGISTRY_SIGNING_KEY \
+  --key-id dev-key \
+  --signer release-bot
+
+# 3. Verify the signature
+mtp-registry verify package.yaml \
+  --signature package.signature.v0.6.yaml \
+  --key-env MTP_REGISTRY_SIGNING_KEY
+
+# 4. Create approval record
+mtp-registry approve package.yaml \
+  --signature package.signature.v0.6.yaml \
+  --approver-id risk-committee \
+  --approver-name "Risk Committee" \
+  --role governance \
+  --status approved \
+  --policy enterprise-v1 \
+  --rationale "Approved for internal use."
+
+# 5. Publish to registry
+mtp-registry publish package.yaml \
+  --registry-dir registry/ \
+  --signature package.signature.v0.6.yaml \
+  --key-env MTP_REGISTRY_SIGNING_KEY \
+  --approval package.approval.v0.6.yaml \
+  --status approved \
+  --channel internal \
+  --conformance-level l3
+
+# 6. List entries
+mtp-registry list registry/ --status approved
+
+# 7. Verify entry
+mtp-registry check-entry registry/entries/example.registry-entry.yaml \
+  --registry-dir registry/ \
+  --key-env MTP_REGISTRY_SIGNING_KEY
 ```
 
 ## Registry Layout
 
 `mtp-registry init` creates:
 
-- `registry.yaml`
-- `artifacts/packages/`
-- `artifacts/execution-reports/`
-- `signatures/`
-- `approvals/`
-- `entries/`
+```
+registry/
+├── registry.yaml                    # Manifest (id, name, channels)
+├── artifacts/
+│   ├── packages/{id}/{ver}/         # Published packages
+│   └── execution-reports/{id}/{ver}/ # Published execution reports
+├── signatures/{id}/{ver}/           # Detached signature envelopes
+├── approvals/{id}/{ver}/            # Detached approval records
+└── entries/                         # Registry entries
+```
 
-Published entries use relative references so the registry stays portable.
+All references within the registry use relative paths so the entire directory remains portable.
+
+## Schemas
+
+v0.6 adds four JSON schemas (under `schema/`):
+
+| Schema | Validates |
+|--------|-----------|
+| `mtp-registry-manifest-v0.6.json` | Registry manifests |
+| `mtp-signature-envelope-v0.6.json` | Signature envelopes |
+| `mtp-approval-record-v0.6.json` | Approval records |
+| `mtp-registry-entry-v0.6.json` | Registry entries |
+
+These validate the trust layer only. They do not replace `mtp-package-v0.2.json` or `mtp-execution-report-v0.2.json`.
+
+## Design Limits
+
+The v0.6 implementation is intentionally conservative:
+
+- Local filesystem registry only
+- HMAC-SHA256 reference profile only
+- Detached approvals only
+- No multi-party quorum logic
+- No external KMS or certificate chain
+
+These are v1.0 concerns. v0.6 defines the asset model and makes registry publication reproducible today.

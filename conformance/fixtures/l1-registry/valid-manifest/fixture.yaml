@@ -1,0 +1,8 @@
+id: l1-registry-valid-manifest
+level: l1
+kind: registry_validation
+description: Example registry manifest must pass v0.6 schema validation.
+artifact: ../../../../examples/registry/registry.yaml
+expect:
+  valid: true
+  artifact_type: registry_manifest

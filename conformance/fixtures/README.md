@@ -24,6 +24,11 @@ conformance/fixtures/
 │   └── clean/reference-package/       # Clean package (no leaks)
 ├── l3-provenance/
 │   └── full-package/                  # Provenance + execution_semantics present
+├── l1-registry/
+│   ├── valid-manifest/                # Registry manifest schema validation
+│   ├── valid-signature/               # Signature envelope schema validation
+│   ├── valid-approval/                # Approval record schema validation
+│   └── valid-entry/                   # Registry entry schema validation
 └── drift/
     ├── self-score/
     │   ├── mock-reference/            # Self-score = 1.0 (all success)
@@ -127,6 +132,18 @@ expect:
   state_agreement: 0.8
   difference_steps: [3]
   tolerance: 0.0001
+```
+
+### `registry_validation` (L1)
+
+Validates a v0.6 registry artifact (manifest, signature envelope, approval record, or registry entry) against its JSON Schema.
+
+```yaml
+kind: registry_validation
+artifact: relative/path/to/registry-artifact.yaml
+expect:
+  valid: true | false
+  artifact_type: registry_manifest | signature_envelope | approval_record | registry_entry
 ```
 
 ### `provenance` (L3)

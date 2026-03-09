@@ -15,6 +15,7 @@ from mtp_registry.workflows import (
     create_approval_record,
     create_signature_envelope,
     init_registry,
+    list_entries,
     publish_artifact,
     verify_registry_entry,
     verify_signature_envelope,
@@ -212,6 +213,32 @@ def publish(
         sys.exit(1)
 
     click.echo(f"Registry entry written to {entry_path}")
+
+
+@main.command(name="list")
+@click.argument("registry_dir", type=click.Path(exists=True, file_okay=False, path_type=Path))
+@click.option("--status", type=click.Choice(["draft", "review", "approved", "deprecated"]), default=None,
+              help="Filter by registry status")
+@click.option("--channel", default=None, help="Filter by channel")
+@click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text")
+def list_cmd(registry_dir: Path, status: str | None, channel: str | None, output_format: str):
+    """List registry entries, optionally filtered by status or channel."""
+    entries = list_entries(registry_dir, status=status, channel=channel)
+
+    if output_format == "json":
+        click.echo(json.dumps(entries, indent=2))
+    else:
+        if not entries:
+            click.echo("No entries found.")
+            return
+        click.echo(f"{'Name':30s} {'Version':10s} {'Status':12s} {'Channel':12s} {'Type':10s}")
+        click.echo("-" * 74)
+        for entry in entries:
+            click.echo(
+                f"{entry['name']:30s} {entry['version']:10s} "
+                f"{entry['status']:12s} {entry['channel']:12s} {entry['artifact_type']:10s}"
+            )
+        click.echo(f"\nTotal: {len(entries)} entries")
 
 
 @main.command(name="check-entry")

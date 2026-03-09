@@ -61,6 +61,7 @@ jobs:
         run: |
           pip install -e tools/mtp-lint
           pip install -e tools/mtp-run
+          pip install -e tools/mtp-registry
           pip install -e "tools/mtp-conformance[dev]"
       - name: Run tests
         run: pytest tools/mtp-conformance/tests/ -v --tb=short
@@ -107,6 +108,7 @@ jobs:
         run: |
           pip install -e tools/mtp-lint
           pip install -e tools/mtp-run
+          pip install -e tools/mtp-registry
           pip install -e tools/mtp-conformance
       - name: Run conformance
         run: |

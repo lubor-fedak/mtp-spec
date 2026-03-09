@@ -102,6 +102,8 @@ def _run_fixture_impl(fixture: FixtureManifest) -> dict[str, Any]:
         return _run_drift_compare_fixture(fixture)
     if fixture.kind == "provenance":
         return _run_provenance_fixture(fixture)
+    if fixture.kind == "registry_validation":
+        return _run_registry_validation(fixture)
     raise ValueError(f"Unknown fixture kind '{fixture.kind}' in {fixture.manifest_path}")
 
 
@@ -362,6 +364,37 @@ def _run_provenance_fixture(fixture: FixtureManifest) -> dict[str, Any]:
     return {
         "passed": passed,
         "missing": missing,
+    }
+
+
+def _run_registry_validation(fixture: FixtureManifest) -> dict[str, Any]:
+    from mtp_registry.artifacts import (
+        detect_artifact_type as registry_detect_type,
+        load_artifact as registry_load,
+        validate_registry_artifact,
+    )
+
+    artifact_path = _required_path(fixture, "artifact")
+    data = registry_load(artifact_path)
+    artifact_type = registry_detect_type(data)
+    errors = validate_registry_artifact(data)
+
+    expected_valid = bool(fixture.data["expect"]["valid"])
+    expected_type = fixture.data["expect"].get("artifact_type")
+    actual_valid = not errors
+    type_matches = expected_type is None or artifact_type == expected_type
+
+    passed = actual_valid == expected_valid and type_matches
+    return {
+        "passed": passed,
+        "artifact": str(artifact_path),
+        "artifact_type": artifact_type,
+        "expected_type": expected_type,
+        "actual_valid": actual_valid,
+        "expected_valid": expected_valid,
+        "type_matches": type_matches,
+        "error_count": len(errors),
+        "errors": errors,
     }
 
 
